@@ -27,100 +27,11 @@ import {
   View,
 } from 'react-native';
 import { Palette, Colors, Typography, Spacing, Radius, Shadows } from '@/constants/theme';
+import { useWallet } from '@/hooks/use-wallet';
+import type { WalletTransaction } from '@/hooks/use-wallet';
 
 const C = Colors.light;
 
-// ─── Types (Squad API–shaped) ─────────────────────────────────────────────────
-
-type TxnType = 'credit' | 'debit' | 'savings';
-
-interface Transaction {
-  id: string;
-  type: TxnType;
-  amount: number;          // kobo → display as ₦
-  description: string;
-  counterparty: string;
-  category: string;
-  icon: string;
-  timestamp: Date;
-  balance_after: number;
-  reference: string;
-}
-
-// ─── Mock transaction data ────────────────────────────────────────────────────
-
-const MOCK_TRANSACTIONS: Transaction[] = [
-  {
-    id: 'txn_001', type: 'credit', amount: 15000,
-    description: 'Gig payment received',
-    counterparty: 'Emeka Okafor', category: 'Income', icon: '💼',
-    timestamp: new Date(Date.now() - 1000 * 60 * 45),
-    balance_after: 42350, reference: 'KR240513001',
-  },
-  {
-    id: 'txn_002', type: 'debit', amount: 3500,
-    description: 'Food & supplies',
-    counterparty: "Mama's Kitchen", category: 'Food', icon: '🍲',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 3),
-    balance_after: 27350, reference: 'KR240513002',
-  },
-  {
-    id: 'txn_003', type: 'savings', amount: 5000,
-    description: 'Savings deposit',
-    counterparty: 'Emergency Fund', category: 'Savings', icon: '🏦',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 6),
-    balance_after: 30850, reference: 'KR240513003',
-  },
-  {
-    id: 'txn_004', type: 'credit', amount: 20000,
-    description: 'Wallet funding',
-    counterparty: 'GTBank •• 4421', category: 'Funding', icon: '⬇️',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24),
-    balance_after: 35850, reference: 'KR240512001',
-  },
-  {
-    id: 'txn_005', type: 'debit', amount: 5000,
-    description: 'Transfer to bank',
-    counterparty: 'First Bank •• 8821', category: 'Transfer', icon: '🏧',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 26),
-    balance_after: 15850, reference: 'KR240512002',
-  },
-  {
-    id: 'txn_006', type: 'credit', amount: 8000,
-    description: 'Service payment',
-    counterparty: 'Adaeze Nwosu', category: 'Income', icon: '⚙️',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48),
-    balance_after: 20850, reference: 'KR240511001',
-  },
-  {
-    id: 'txn_007', type: 'debit', amount: 500,
-    description: 'Airtime purchase',
-    counterparty: 'MTN Nigeria', category: 'Utilities', icon: '📱',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 50),
-    balance_after: 12850, reference: 'KR240511002',
-  },
-  {
-    id: 'txn_008', type: 'debit', amount: 1200,
-    description: 'Market purchase',
-    counterparty: 'Balogun Market', category: 'Shopping', icon: '🛒',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 72),
-    balance_after: 13350, reference: 'KR240510001',
-  },
-  {
-    id: 'txn_009', type: 'savings', amount: 2000,
-    description: 'Savings deposit',
-    counterparty: 'Device Fund', category: 'Savings', icon: '🏦',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 96),
-    balance_after: 14550, reference: 'KR240509001',
-  },
-  {
-    id: 'txn_010', type: 'credit', amount: 12500,
-    description: 'Gig payment received',
-    counterparty: 'Chukwudi Builders', category: 'Income', icon: '🏗',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 120),
-    balance_after: 16550, reference: 'KR240508001',
-  },
-];
 
 // Savings goals
 interface SavingsGoal {
@@ -140,9 +51,11 @@ const SAVINGS_GOALS: SavingsGoal[] = [
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const fmt = (n: number) =>
-  '₦' + n.toLocaleString('en-NG', { minimumFractionDigits: 0 });
+  '\u20a6' + n.toLocaleString('en-NG', { minimumFractionDigits: 0 });
 
-function relativeTime(date: Date): string {
+/** Accepts ISO 8601 string or Date */
+function relativeTime(input: string | Date): string {
+  const date = typeof input === 'string' ? new Date(input) : input;
   const diff = Date.now() - date.getTime();
   const mins = Math.floor(diff / 60000);
   if (mins < 60) return `${mins}m ago`;
@@ -165,7 +78,7 @@ const FILTERS: { key: FilterKey; label: string }[] = [
 
 // ─── Transaction row ──────────────────────────────────────────────────────────
 
-function TxnRow({ txn }: { txn: Transaction }) {
+function TxnRow({ txn }: { txn: WalletTransaction }) {
   const isCredit  = txn.type === 'credit';
   const isSavings = txn.type === 'savings';
   const amountColor = isCredit ? C.success : isSavings ? Palette.status.infoBlue : C.error;
@@ -241,52 +154,65 @@ function GoalCard({ goal }: { goal: SavingsGoal }) {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-const WALLET_BALANCE = 42350;
-const VIRTUAL_ACCT   = '8021 4835 60';
-const BANK_NAME      = 'Wema Bank (Squad)';
-
 export default function SquadWallet() {
-  const [filter, setFilter]       = useState<FilterKey>('all');
+  // ── Live data from Squad-backed API (mock fallback when offline) ───────────
+  const { balance, transactions, loading, txnLoading, isOffline, refetch } = useWallet();
+
+  const [filter, setFilter]         = useState<FilterKey>('all');
   const [balanceVisible, setVisible] = useState(true);
+
+  // Derived values from live data
+  const acctRaw   = balance?.account_number ?? '8021483560';
+  const acctFmt   = acctRaw.replace(/(\d{4})(\d{4})(\d{2})/, '$1 $2 $3');
+  const bankName  = balance?.bank_name ?? 'Wema Bank (Squad)';
+  const kycTier   = balance?.kyc_tier  ?? 2;
+  const liveBal   = balance?.balance   ?? 0;
 
   const filtered = useMemo(() =>
     filter === 'all'
-      ? MOCK_TRANSACTIONS
-      : MOCK_TRANSACTIONS.filter((t) => t.type === filter),
-    [filter]
+      ? transactions
+      : transactions.filter((t) => t.type === filter),
+    [filter, transactions]
   );
 
-  // Cash-flow insight (last 7 days)
-  const totalIn  = MOCK_TRANSACTIONS.filter((t) => t.type === 'credit' ).reduce((s, t) => s + t.amount, 0);
-  const totalOut = MOCK_TRANSACTIONS.filter((t) => t.type === 'debit'  ).reduce((s, t) => s + t.amount, 0);
-  const saved    = MOCK_TRANSACTIONS.filter((t) => t.type === 'savings').reduce((s, t) => s + t.amount, 0);
+  // Cash-flow stats from real transaction history
+  const totalIn  = transactions.filter((t) => t.type === 'credit' ).reduce((s, t) => s + t.amount, 0);
+  const totalOut = transactions.filter((t) => t.type === 'debit'  ).reduce((s, t) => s + t.amount, 0);
+  const saved    = transactions.filter((t) => t.type === 'savings').reduce((s, t) => s + t.amount, 0);
 
   const copyAccount = useCallback(() => {
-    Alert.alert('Copied', `Account number ${VIRTUAL_ACCT} copied to clipboard.`);
-  }, []);
+    Alert.alert('Copied', `Account number ${acctFmt} copied to clipboard.`);
+  }, [acctFmt]);
 
   return (
     <ScrollView style={styles.root} showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+
+      {/* ── Offline indicator ── */}
+      {isOffline && (
+        <View style={styles.offlineBanner}>
+          <Text style={styles.offlineText}>⚡ Showing cached data — connect to refresh</Text>
+        </View>
+      )}
 
       {/* ── Balance hero card ── */}
       <View style={styles.heroCard}>
         {/* KYC badge */}
         <View style={styles.kyc}>
           <View style={styles.kycDot} />
-          <Text style={styles.kycText}>Tier 2 · Verified</Text>
+          <Text style={styles.kycText}>Tier {kycTier} · Verified</Text>
         </View>
 
         <Text style={styles.balanceLabel}>Available Balance</Text>
         <Pressable onPress={() => setVisible((v) => !v)}>
           <Text style={styles.balanceAmount}>
-            {balanceVisible ? fmt(WALLET_BALANCE) : '₦ ••••••'}
+            {loading ? '₦ ···' : balanceVisible ? fmt(liveBal) : '₦ ••••••'}
           </Text>
         </Pressable>
 
         {/* Virtual account */}
         <Pressable onPress={copyAccount} style={styles.acctChip}>
-          <Text style={styles.acctNum}>{VIRTUAL_ACCT}</Text>
-          <Text style={styles.acctBank}>{BANK_NAME}</Text>
+          <Text style={styles.acctNum}>{acctFmt}</Text>
+          <Text style={styles.acctBank}>{bankName}</Text>
           <Text style={styles.copyIcon}>⎘</Text>
         </Pressable>
       </View>
@@ -373,6 +299,24 @@ export default function SquadWallet() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: C.background },
   content: { paddingBottom: Spacing[12] },
+
+  // Offline banner
+  offlineBanner: {
+    marginHorizontal: Spacing[4],
+    marginTop: Spacing[3],
+    backgroundColor: Palette.status.warningAmber + '22',
+    borderRadius: Radius.lg,
+    paddingHorizontal: Spacing[4],
+    paddingVertical: Spacing[2],
+    borderWidth: 1,
+    borderColor: Palette.status.warningAmber + '55',
+  },
+  offlineText: {
+    fontSize: Typography.size.xs,
+    color: Palette.status.warningAmber,
+    fontWeight: Typography.weight.medium,
+    textAlign: 'center',
+  },
 
   // Hero
   heroCard: {

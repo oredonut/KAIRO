@@ -24,6 +24,7 @@ import {
 } from 'react-native';
 // No SVG dependency — ring built with pure React Native Views
 import { Palette, Colors, Typography, Spacing, Radius, Shadows } from '@/constants/theme';
+import { useTrustScore } from '@/hooks/use-trust-score';
 
 // ─── Theme shorthand ──────────────────────────────────────────────────────────
 const C = Colors.light;
@@ -269,55 +270,52 @@ function Sparkline({ history }: { history: number[] }) {
 
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 
-const INITIAL_SCORE = 420;
-
-// Signal fill ratios — driven by the sim (start values reflect a 420-pt profile)
-const INITIAL_FILLS: Record<string, number> = {
-  txn: 0.55, repay: 0.60, savings: 0.40, gig: 0.50, community: 0.35, engagement: 0.70,
-};
-
 export default function TrustScoreDashboard() {
-  const [score, setScore] = useState(INITIAL_SCORE);
-  const [fills, setFills] = useState(INITIAL_FILLS);
-  const [explanation, setExplanation] = useState<{ text: string; delta: number } | null>(null);
-  const [history, setHistory] = useState<number[]>([380, 395, 405, 410, 420]);
-  const [cooldown, setCooldown] = useState<string | null>(null); // key of action on cooldown
+  // ── Real API data (falls back to mock when offline) ──────────────────────
+  const {
+    score,
+    band: apiBand,
+    signals,
+    history,
+    explanation: apiExplanation,
+    isOffline,
+    simulateAction,
+  } = useTrustScore();
 
-  const animScore = useRef(new Animated.Value(INITIAL_SCORE)).current;
+  // animScore drives the ring + counter animations
+  const animScore = useRef(new Animated.Value(score)).current;
+  const [cooldown, setCooldown] = useState<string | null>(null);
 
+  // Keep animScore in sync when the API updates the score
+  useEffect(() => {
+    Animated.timing(animScore, {
+      toValue: score,
+      duration: 800,
+      useNativeDriver: false,
+    }).start();
+  }, [score]);
+
+  // Map API signals to the fill Record the SignalBar components expect
+  const fills: Record<string, number> = {};
+  signals.forEach((s) => { fills[s.key] = s.value; });
+
+  // Wrap the hook's simulateAction with local cooldown + Animated trigger
   const applyAction = useCallback((action: SimAction) => {
     if (cooldown === action.label) return;
-
-    setScore((prev) => {
-      const next = Math.min(1000, Math.max(0, prev + action.delta));
-      Animated.timing(animScore, {
-        toValue: next,
-        duration: 800,
-        useNativeDriver: false,
-      }).start();
-
-      setHistory((h) => [...h.slice(-6), next]);
-      return next;
-    });
-
-    // Update relevant signal fill
-    setFills((prev) => {
-      const current = prev[action.signal] ?? 0.5;
-      const bump = action.delta > 0 ? 0.08 : -0.12;
-      return { ...prev, [action.signal]: Math.min(1, Math.max(0.02, current + bump)) };
-    });
-
-    // Show explanation
     const absD = Math.abs(action.delta);
-    setExplanation({
-      text: action.explanation.replace('{d}', String(absD)),
-      delta: action.delta,
-    });
-
-    // Brief cooldown to prevent spam
+    simulateAction(
+      action.delta,
+      action.signal,
+      action.explanation.replace('{d}', String(absD)),
+    );
     setCooldown(action.label);
     setTimeout(() => setCooldown(null), 1200);
-  }, [cooldown, animScore]);
+  }, [cooldown, simulateAction]);
+
+  // Explanation from hook (includes both API-pushed and sim-triggered)
+  const explanation = apiExplanation
+    ? { text: apiExplanation.text, delta: apiExplanation.delta }
+    : null;
 
   const band = getBand(score);
 
