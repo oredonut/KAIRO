@@ -37,6 +37,13 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="mic.fill" color={color} />,
         }}
       />
+      <Tabs.Screen
+        name="trust"
+        options={{
+          title: 'Trust',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="star.fill" color={color} />,
+        }}
+      />
     </Tabs>
   );
 }
