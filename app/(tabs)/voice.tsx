@@ -17,8 +17,8 @@ export default function VoiceScreen() {
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
-        {/* ── Page header ── */}
-        <View style={styles.header}>
+        {/* ── Premium Dark Header ── */}
+        <View style={styles.headerContainer}>
           <View style={styles.pill}>
             <Text style={styles.pillText}>PROFILE</Text>
           </View>
@@ -28,11 +28,13 @@ export default function VoiceScreen() {
           </Text>
         </View>
 
-        {/* ── Card ── */}
-        <VoiceRecorderCard
-          onSave={(uri) => console.log('[Kairo] Voice saved at:', uri)}
-          onDelete={() => console.log('[Kairo] Voice deleted')}
-        />
+        {/* ── Card (Overlapping the header) ── */}
+        <View style={styles.cardWrapper}>
+          <VoiceRecorderCard
+            onSave={(uri) => console.log('[Kairo] Voice saved at:', uri)}
+            onDelete={() => console.log('[Kairo] Voice deleted')}
+          />
+        </View>
 
         {/* ── Info strip ── */}
         <View style={styles.infoStrip}>
@@ -55,41 +57,44 @@ export default function VoiceScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: C.background },
   scroll: {
-    paddingTop: Spacing[4],
     paddingBottom: Spacing[12],
     gap: Spacing[6],
   },
-  header: {
+  headerContainer: {
+    backgroundColor: Palette.dark[900],
+    paddingTop: Spacing[6],
+    paddingBottom: Spacing[14], // Extra padding for overlap
     paddingHorizontal: Spacing[5],
-    gap: Spacing[2],
+    borderBottomLeftRadius: Radius.xl,
+    borderBottomRightRadius: Radius.xl,
   },
   pill: {
     alignSelf: 'flex-start',
-    backgroundColor: C.brandLight,
-    borderRadius: Radius.full,
-    paddingHorizontal: Spacing[3],
-    paddingVertical: 3,
-    borderWidth: 1,
-    borderColor: Palette.gold[300],
-    marginBottom: Spacing[1],
+    marginBottom: Spacing[2],
   },
   pillText: {
-    fontSize: Typography.size.xs,
-    fontWeight: Typography.weight.bold,
-    color: C.brandDark,
-    letterSpacing: 1.2,
+    fontSize: Typography.size.sm,
+    fontWeight: '900',
+    color: Palette.gold[400],
+    letterSpacing: 2.5,
+    textTransform: 'uppercase',
   },
   heading: {
     fontFamily: Platform.select({ ios: 'Georgia', android: 'serif', default: 'serif' }),
-    fontSize: Typography.size['2xl'],
+    fontSize: Typography.size['3xl'],
     fontWeight: Typography.weight.bold,
-    color: C.textPrimary,
+    color: Palette.white.pure,
     letterSpacing: -0.5,
+    marginBottom: Spacing[2],
   },
   subheading: {
-    fontSize: Typography.size.base,
-    color: C.textSecondary,
-    lineHeight: 22,
+    fontSize: Typography.size.md,
+    color: Palette.dark[200],
+    lineHeight: 24,
+  },
+  cardWrapper: {
+    marginTop: -40, // Negative margin to overlap the dark header
+    zIndex: 10,
   },
   infoStrip: {
     marginHorizontal: Spacing[4],
