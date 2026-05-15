@@ -173,4 +173,4 @@ async def list_journals(
         .limit(limit)
     )
     return [VoiceJournalResponse.model_validate(j) for j in result.scalars().all()]
-    print("test")
+    
