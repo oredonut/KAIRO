@@ -148,6 +148,21 @@ export default function NetworkScreen() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        {/* Network Effect Promo */}
+        <Pressable 
+          onPress={() => router.push('/network/refer')}
+          style={styles.promoCard}
+        >
+          <View style={{ flex: 1 }}>
+            <Text style={styles.promoTag}>TRUST BOOST 🎁</Text>
+            <Text style={styles.promoTitle}>Grow the Circle</Text>
+            <Text style={styles.promoDesc}>Invite other pros and get +50 points when they verify.</Text>
+          </View>
+          <View style={styles.promoIconBox}>
+            <Text style={{ fontSize: 24 }}>🤝</Text>
+          </View>
+        </Pressable>
+
         {MOCK_POSTS.map(post => (
           <PostCard key={post.id} post={post} />
         ))}
@@ -195,6 +210,44 @@ const styles = StyleSheet.create({
 
   scrollContent: { padding: Spacing[4] },
   
+  promoCard: {
+    backgroundColor: Palette.dark[900],
+    borderRadius: Radius.xl,
+    padding: Spacing[4],
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Spacing[5],
+    ...Shadows.md,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 160, 23, 0.3)',
+  },
+  promoTag: {
+    color: Palette.gold[500],
+    fontSize: 9,
+    fontWeight: '900',
+    marginBottom: 4,
+  },
+  promoTitle: {
+    color: Palette.white.pure,
+    fontSize: 16,
+    fontWeight: '900',
+  },
+  promoDesc: {
+    color: Palette.dark[300],
+    fontSize: 11,
+    marginTop: 2,
+    lineHeight: 16,
+  },
+  promoIconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 12,
+  },
+
   card: {
     backgroundColor: Palette.white.pure,
     borderRadius: Radius['2xl'],

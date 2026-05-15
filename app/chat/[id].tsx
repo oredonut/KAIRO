@@ -9,7 +9,8 @@ import {
   KeyboardAvoidingView, 
   Platform,
   Alert,
-  ActivityIndicator
+  ActivityIndicator,
+  Modal,
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Image } from 'expo-image';
@@ -48,6 +49,8 @@ export default function ChatScreen() {
       type: 'text'
     }
   ]);
+  const [showOfferModal, setShowOfferModal] = useState(false);
+  const [offerValue, setOfferValue] = useState('15000');
   const [inputText, setInputText] = useState('');
   const [paying, setPaying] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -65,48 +68,62 @@ export default function ChatScreen() {
     setInputText('');
   };
 
-  const sendOffer = () => {
-    Alert.prompt(
-      'Send Price Offer',
-      'Enter the agreed amount for the job (₦)',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Send', 
-          onPress: (amount) => {
-            if (amount && !isNaN(Number(amount))) {
-              const offer: Message = {
-                id: Date.now().toString(),
-                text: `PROPOSED PRICE: ₦${Number(amount).toLocaleString()}`,
-                sender: 'other', // Simulate the worker sending the offer
-                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                type: 'offer',
-                offerAmount: Number(amount),
-                status: 'pending'
-              };
-              setMessages([...messages, offer]);
-            }
-          } 
-        },
-      ],
-      'plain-text',
-      '15000'
-    );
+  const createOffer = (amount: number) => {
+    const offer: Message = {
+      id: Date.now().toString(),
+      text: `PROPOSED PRICE: ₦${amount.toLocaleString()}`,
+      sender: 'me', // User initiates the offer
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      type: 'offer',
+      offerAmount: amount,
+      status: 'pending'
+    };
+    setMessages(prev => [...prev, offer]);
+    setShowOfferModal(false);
+    
+    // Simulate seller responding after 2 seconds
+    setTimeout(() => {
+      const response: Message = {
+        id: (Date.now() + 1).toString(),
+        text: `That works for me! I'll get started once the escrow is funded.`,
+        sender: 'other',
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        type: 'text'
+      };
+      setMessages(prev => [...prev, response]);
+    }, 2000);
+  };
+
+  const handleAction = (msgId: string, action: 'accept' | 'decline' | 'pay') => {
+    if (action === 'decline') {
+      setMessages(prev => prev.map(m => 
+        m.id === msgId ? { ...m, status: 'declined', text: '❌ OFFER DECLINED' } : m
+      ));
+      return;
+    }
+
+    if (action === 'accept') {
+      setMessages(prev => prev.map(m => 
+        m.id === msgId ? { ...m, status: 'accepted', text: '🤝 OFFER ACCEPTED' } : m
+      ));
+      return;
+    }
+
+    if (action === 'pay') {
+      handlePayment(msgId, messages.find(m => m.id === msgId)?.offerAmount || 0);
+    }
   };
 
   const handlePayment = async (msgId: string, amount: number) => {
     setPaying(true);
     try {
-      // Simulate payment logic
       await new Promise(resolve => setTimeout(resolve, 2000));
-      
       setMessages(prev => prev.map(m => 
         m.id === msgId ? { ...m, status: 'paid', text: '✅ PAYMENT COMPLETED' } : m
       ));
-      
-      Alert.alert('Payment Successful', `₦${amount.toLocaleString()} has been sent to ${name}.`);
+      Alert.alert('Success', `₦${amount.toLocaleString()} funded to escrow. Worker can now start!`);
     } catch (e) {
-      Alert.alert('Payment Failed', 'Check your balance and try again.');
+      Alert.alert('Error', 'Payment failed.');
     } finally {
       setPaying(false);
     }
@@ -126,7 +143,7 @@ export default function ChatScreen() {
             <Text style={styles.headerStatus}>Online</Text>
           </View>
         </View>
-        <Pressable onPress={sendOffer} style={styles.offerBtn}>
+        <Pressable onPress={() => setShowOfferModal(true)} style={styles.offerBtn}>
           <Text style={styles.offerBtnText}>Offer</Text>
         </Pressable>
       </View>
@@ -153,22 +170,65 @@ export default function ChatScreen() {
                 </Text>
                 
                 {msg.type === 'offer' && msg.status === 'pending' && (
+                  <View style={{ gap: 8, marginTop: 10 }}>
+                    {msg.sender === 'other' ? (
+                      // I am the buyer, I see Accept/Decline for seller's offer
+                      <View style={{ flexDirection: 'row', gap: 8 }}>
+                        <Pressable 
+                          onPress={() => handleAction(msg.id, 'accept')}
+                          style={[styles.miniBtn, { backgroundColor: '#22C55E' }]}
+                        >
+                          <Text style={styles.miniBtnText}>ACCEPT</Text>
+                        </Pressable>
+                        <Pressable 
+                          onPress={() => handleAction(msg.id, 'decline')}
+                          style={[styles.miniBtn, { backgroundColor: '#EF4444' }]}
+                        >
+                          <Text style={styles.miniBtnText}>DECLINE</Text>
+                        </Pressable>
+                      </View>
+                    ) : (
+                      // I sent the offer, I wait for response
+                      <View style={styles.waitBadge}>
+                        <Text style={styles.waitText}>WAITING FOR WORKER...</Text>
+                      </View>
+                    )}
+                  </View>
+                )}
+
+                {msg.type === 'offer' && msg.status === 'accepted' && msg.sender === 'me' && (
                   <Pressable 
-                    onPress={() => handlePayment(msg.id, msg.offerAmount!)}
+                    onPress={() => handleAction(msg.id, 'pay')}
                     disabled={paying}
                     style={styles.payBtn}
                   >
                     {paying ? (
                       <ActivityIndicator size="small" color={Palette.dark[900]} />
                     ) : (
-                      <Text style={styles.payBtnText}>ACCEPT & PAY NOW</Text>
+                      <Text style={styles.payBtnText}>PROCEED TO WALLET & PAY</Text>
                     )}
                   </Pressable>
                 )}
 
                 {msg.type === 'offer' && msg.status === 'paid' && (
-                  <View style={styles.paidBadge}>
-                    <Text style={styles.paidText}>ESCROW RELEASED</Text>
+                  <View style={{ gap: 8 }}>
+                    <View style={styles.paidBadge}>
+                      <Text style={styles.paidText}>ESCROW RELEASED</Text>
+                    </View>
+                    <Pressable 
+                      onPress={() => router.push({ 
+                        pathname: "/receipt/[id]", 
+                        params: { 
+                          id: msg.id,
+                          amount: msg.offerAmount, 
+                          recipient: name, 
+                          description: 'Office Maintenance Service' 
+                        } 
+                      })}
+                      style={styles.receiptBtn}
+                    >
+                      <Text style={styles.receiptBtnText}>📄 GENERATE AI RECEIPT</Text>
+                    </Pressable>
                   </View>
                 )}
                 
@@ -192,6 +252,45 @@ export default function ChatScreen() {
           </Pressable>
         </View>
       </KeyboardAvoidingView>
+
+      {/* Premium Offer Modal */}
+      <Modal
+        visible={showOfferModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowOfferModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalSheet}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Make a Price Offer</Text>
+              <Pressable onPress={() => setShowOfferModal(false)}>
+                <Text style={styles.closeModal}>✕</Text>
+              </Pressable>
+            </View>
+            
+            <Text style={styles.modalSub}>Enter the total amount for this gig. This will be held in Kairo Escrow until you confirm work completion.</Text>
+            
+            <View style={styles.priceInputRow}>
+              <Text style={styles.currencySymbol}>₦</Text>
+              <TextInput 
+                style={styles.priceInput}
+                value={offerValue}
+                onChangeText={setOfferValue}
+                keyboardType="numeric"
+                autoFocus
+              />
+            </View>
+
+            <Pressable 
+              onPress={() => createOffer(Number(offerValue))}
+              style={styles.confirmOfferBtn}
+            >
+              <Text style={styles.confirmOfferText}>SEND OFFER</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -275,6 +374,83 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   paidText: { fontSize: 10, fontWeight: 'bold', color: '#166534' },
+  
+  miniBtn: {
+    flex: 1,
+    height: 36,
+    borderRadius: Radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  miniBtnText: { color: Palette.white.pure, fontSize: 10, fontWeight: '900' },
+  waitBadge: {
+    backgroundColor: '#F1F5F9',
+    paddingVertical: 8,
+    borderRadius: Radius.md,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  waitText: { fontSize: 10, fontWeight: 'bold', color: Palette.dark[400] },
+  
+  receiptBtn: {
+    backgroundColor: Palette.white.pure,
+    paddingVertical: 8,
+    borderRadius: Radius.md,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Palette.gold[500],
+  },
+  receiptBtnText: {
+    fontSize: 10,
+    fontWeight: '900',
+    color: Palette.gold[600],
+  },
+
+  // Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalSheet: {
+    backgroundColor: Palette.white.pure,
+    borderTopLeftRadius: Radius['3xl'],
+    borderTopRightRadius: Radius['3xl'],
+    padding: Spacing[6],
+    paddingBottom: Platform.OS === 'ios' ? 40 : 30,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing[4],
+  },
+  modalTitle: { fontSize: Typography.size.lg, fontWeight: '900', color: Palette.dark[900] },
+  closeModal: { fontSize: 20, color: Palette.dark[400] },
+  modalSub: { fontSize: Typography.size.sm, color: Palette.dark[500], lineHeight: 20, marginBottom: Spacing[6] },
+  priceInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderRadius: Radius.xl,
+    paddingHorizontal: Spacing[5],
+    height: 70,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    marginBottom: Spacing[8],
+  },
+  currencySymbol: { fontSize: 24, fontWeight: '900', color: Palette.dark[900], marginRight: 10 },
+  priceInput: { flex: 1, fontSize: 28, fontWeight: '900', color: Palette.dark[900] },
+  confirmOfferBtn: {
+    backgroundColor: Palette.dark[900],
+    height: 56,
+    borderRadius: Radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Shadows.md,
+  },
+  confirmOfferText: { color: Palette.gold[500], fontSize: 14, fontWeight: '900', letterSpacing: 1 },
 
   timestamp: {
     fontSize: 9,
