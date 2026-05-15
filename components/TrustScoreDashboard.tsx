@@ -234,19 +234,53 @@ function ExplainCard({ text, delta }: ExplainCardProps) {
   );
 }
 
+import { ScoreHistoryPoint } from '@/hooks/use-trust-score';
+
+// ─── Growth Timeline ──────────────────────────────────────────────────────────
+function GrowthTimeline({ history }: { history: ScoreHistoryPoint[] }) {
+  return (
+    <View style={styles.timelineContainer}>
+      <Text style={styles.sectionTitle}>Trust Growth Story</Text>
+      <Text style={styles.sectionSub}>How your economic identity has evolved</Text>
+      
+      <View style={styles.timelineList}>
+        {history.map((point, i) => (
+          <View key={i} style={styles.timelineItem}>
+            <View style={styles.timelineLeft}>
+              <View style={[styles.timelineDot, i === 0 && styles.activeDot]} />
+              {i < history.length - 1 && <View style={styles.timelineLine} />}
+            </View>
+            <View style={styles.timelineRight}>
+              <View style={styles.timelineRow}>
+                <Text style={styles.timelineEvent}>{point.event}</Text>
+                <Text style={styles.timelineDate}>{point.timestamp}</Text>
+              </View>
+              <Text style={styles.timelineDelta}>
+                {point.delta > 0 ? '+' : ''}{point.delta} Points · Total: {point.score}
+              </Text>
+            </View>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
 // ─── Sparkline ────────────────────────────────────────────────────────────────
-function Sparkline({ history }: { history: number[] }) {
+function Sparkline({ history }: { history: ScoreHistoryPoint[] }) {
   if (history.length < 2) return null;
-  const min = Math.min(...history);
-  const max = Math.max(...history);
+  const scores = history.map(h => h.score);
+  const min = Math.min(...scores);
+  const max = Math.max(...scores);
   const range = Math.max(max - min, 1);
 
   return (
     <View style={styles.sparkContainer}>
-      <Text style={styles.sparkTitle}>Score history</Text>
+      <Text style={styles.sparkTitle}>Recent Momentum</Text>
       <View style={styles.sparkBars}>
-        {history.map((v, i) => {
-          const h = ((v - min) / range) * 44 + 6;
+        {[...history].reverse().map((h, i) => {
+          const val = h.score;
+          const barH = ((val - min) / range) * 44 + 6;
           const isLast = i === history.length - 1;
           return (
             <View key={i} style={styles.sparkBarWrap}>
@@ -254,12 +288,12 @@ function Sparkline({ history }: { history: number[] }) {
                 style={[
                   styles.sparkBar,
                   {
-                    height: h,
+                    height: barH,
                     backgroundColor: isLast ? Palette.gold[500] : Palette.gold[200],
                   },
                 ]}
               />
-              {isLast && <Text style={styles.sparkVal}>{v}</Text>}
+              {isLast && <Text style={styles.sparkVal}>{val}</Text>}
             </View>
           );
         })}
@@ -396,6 +430,11 @@ export default function TrustScoreDashboard() {
       {/* ── Sparkline history ── */}
       <View style={styles.card}>
         <Sparkline history={history} />
+      </View>
+
+      {/* ── Growth Timeline ── */}
+      <View style={styles.card}>
+        <GrowthTimeline history={history} />
       </View>
 
       {/* ── Band reference ── */}
@@ -559,6 +598,33 @@ const styles = StyleSheet.create({
   sparkBarWrap: { flex: 1, alignItems: 'center', justifyContent: 'flex-end' },
   sparkBar: { width: '100%', borderRadius: Radius.xs },
   sparkVal: { fontSize: Typography.size.xs, color: Palette.gold[600], marginTop: 3, fontWeight: Typography.weight.bold },
+
+  // Timeline
+  timelineContainer: { width: '100%' },
+  timelineList: { marginTop: Spacing[4], gap: 0 },
+  timelineItem: { flexDirection: 'row', gap: Spacing[4] },
+  timelineLeft: { width: 12, alignItems: 'center' },
+  timelineRight: { flex: 1, paddingBottom: Spacing[6] },
+  timelineDot: {
+    width: 12, height: 12, borderRadius: 6,
+    backgroundColor: Palette.gold[200],
+    zIndex: 2,
+  },
+  activeDot: {
+    backgroundColor: Palette.gold[500],
+    borderWidth: 2,
+    borderColor: Palette.white.pure,
+    ...Shadows.sm,
+  },
+  timelineLine: {
+    position: 'absolute',
+    top: 12, bottom: -Spacing[6] + 12,
+    width: 2, backgroundColor: Palette.gold[100],
+  },
+  timelineRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 },
+  timelineEvent: { fontSize: Typography.size.sm, fontWeight: 'bold', color: C.textPrimary },
+  timelineDate: { fontSize: 10, color: C.textMuted },
+  timelineDelta: { fontSize: Typography.size.xs, color: Palette.gold[600], fontWeight: '600' },
 
   // Band reference
   bandRow: {

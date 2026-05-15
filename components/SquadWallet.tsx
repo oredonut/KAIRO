@@ -26,6 +26,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { router } from 'expo-router';
 import { Palette, Colors, Typography, Spacing, Radius, Shadows } from '@/constants/theme';
 import { useWallet } from '@/hooks/use-wallet';
 import type { WalletTransaction } from '@/hooks/use-wallet';
@@ -43,10 +44,7 @@ interface SavingsGoal {
   dueDate: string;
 }
 
-const SAVINGS_GOALS: SavingsGoal[] = [
-  { id: 'sg1', label: 'Emergency Fund',  icon: '🛡', target: 50000, current: 32500, dueDate: 'Jul 2025' },
-  { id: 'sg2', label: 'New Device',      icon: '📱', target: 80000, current: 17000, dueDate: 'Sep 2025' },
-];
+const SAVINGS_GOALS: SavingsGoal[] = [];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -229,7 +227,9 @@ export default function SquadWallet() {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Savings Goals</Text>
-          <Pressable><Text style={styles.sectionLink}>+ New goal</Text></Pressable>
+          <Pressable onPress={() => router.push('/wallet/new-goal')}>
+            <Text style={styles.sectionLink}>+ New goal</Text>
+          </Pressable>
         </View>
         {SAVINGS_GOALS.map((g) => <GoalCard key={g.id} goal={g} />)}
       </View>

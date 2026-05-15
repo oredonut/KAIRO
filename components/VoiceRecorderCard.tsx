@@ -247,7 +247,7 @@ export default function VoiceRecorderCard({
         });
       }, 1000);
     } catch (e) {
-      console.warn('[VoiceRecorder] startRecording error:', e);
+      console.warn('[VoiceRecorderCard] startRecording error:', e);
     }
   }, []);
 

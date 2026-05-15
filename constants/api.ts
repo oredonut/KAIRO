@@ -11,13 +11,17 @@
  *   /api/v1/auth      → refresh
  */
 
-// ─── Base URL ─────────────────────────────────────────────────────────────────
 // Change this to your FastAPI backend URL.
 // For local dev: http://localhost:8000
 // For staging:   https://api-staging.kairo.app
 // For prod:      https://api.kairo.app
 
-export const API_BASE_URL = 'https://api.kairo.app';
+const IS_LOCAL = true; // Set to false for production
+
+export const API_BASE_URL = IS_LOCAL 
+  ? 'http://localhost:8000' 
+  : 'https://api.kairo.app';
+
 export const API_VERSION   = 'v1';
 export const API_ROOT      = `${API_BASE_URL}/api/${API_VERSION}`;
 
@@ -51,6 +55,13 @@ export const ENDPOINTS = {
     history:  `${API_ROOT}/scores/history`,
     explain:  `${API_ROOT}/scores/explain`,
     simulate: `${API_ROOT}/scores/simulate`,
+  },
+
+  // Opportunities
+  opportunities: {
+    list:      `${API_ROOT}/opportunities`,
+    details:   (id: string) => `${API_ROOT}/opportunities/${id}`,
+    recommend: `${API_ROOT}/opportunities/recommended`,
   },
 } as const;
 

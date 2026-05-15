@@ -26,15 +26,8 @@ export default function TabLayout() {
       <Tabs.Screen
         name="explore"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="voice"
-        options={{
-          title: 'Voice',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="mic.fill" color={color} />,
+          title: 'Gigs',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="briefcase.fill" color={color} />,
         }}
       />
       <Tabs.Screen
@@ -49,6 +42,13 @@ export default function TabLayout() {
         options={{
           title: 'Heatmap',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="map.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="network"
+        options={{
+          title: 'Network',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.3.fill" color={color} />,
         }}
       />
       <Tabs.Screen

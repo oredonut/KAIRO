@@ -9,9 +9,10 @@
  *   const { score, band, signals, history, explanation, loading, refetch } = useTrustScore();
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { api, NetworkError } from '@/services/apiClient';
 import { ENDPOINTS, POLL_INTERVAL } from '@/constants/api';
+import { useOnboardingStore } from '@/store/onboarding-store';
 
 // ─── API response types ───────────────────────────────────────────────────────
 
@@ -36,6 +37,8 @@ export interface TrustScoreResponse {
 
 export interface ScoreHistoryPoint {
   score: number;
+  delta: number;
+  event: string;
   timestamp: string;
 }
 
@@ -64,13 +67,7 @@ const MOCK_SCORE: TrustScoreResponse = {
   next_update_in_seconds: 3600,
 };
 
-const MOCK_HISTORY: ScoreHistoryPoint[] = [
-  { score: 380, timestamp: new Date(Date.now() - 4.32e8).toISOString() },
-  { score: 395, timestamp: new Date(Date.now() - 3.456e8).toISOString() },
-  { score: 405, timestamp: new Date(Date.now() - 2.592e8).toISOString() },
-  { score: 410, timestamp: new Date(Date.now() - 1.728e8).toISOString() },
-  { score: 420, timestamp: new Date().toISOString() },
-];
+const MOCK_HISTORY: ScoreHistoryPoint[] = [];
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
@@ -78,7 +75,7 @@ interface UseTrustScoreReturn {
   score: number;
   band: ScoreBand;
   signals: ScoreSignal[];
-  history: number[];             // just the score values for sparkline
+  history: ScoreHistoryPoint[];
   explanation: ScoreExplanation | null;
   modelVersion: string;
   loading: boolean;
@@ -90,7 +87,50 @@ interface UseTrustScoreReturn {
 }
 
 export function useTrustScore(): UseTrustScoreReturn {
-  const [scoreData, setScoreData]       = useState<TrustScoreResponse>(MOCK_SCORE);
+  const { fullName, skills, voiceBio, walletCreated, bvnVerified } = useOnboardingStore();
+  
+  // Calculate initial score based on onboarding progress
+  const initialScore = useMemo(() => {
+    let base = 350; // Starting point
+    if (fullName) base += 20;
+    if (skills.length > 0) base += 30;
+    if (bvnVerified) base += 100; // Big boost for BVN!
+    if (voiceBio) base += 50;
+    if (walletCreated) base += 50;
+    return base;
+  }, [fullName, skills, voiceBio, walletCreated, bvnVerified]);
+
+  const historyPoints = useMemo(() => {
+    const points: ScoreHistoryPoint[] = [];
+    let current = 350;
+    
+    points.push({ score: 350, delta: 0, event: 'Identity Created', timestamp: 'May 01' });
+    
+    if (fullName) {
+      current += 20;
+      points.push({ score: current, delta: 20, event: 'Basic Info Added', timestamp: 'May 02' });
+    }
+    if (skills.length > 0) {
+      current += 30;
+      points.push({ score: current, delta: 30, event: 'Skills Defined', timestamp: 'May 05' });
+    }
+    if (voiceBio) {
+      current += 50;
+      points.push({ score: current, delta: 50, event: 'Voice Identity Linked', timestamp: 'May 10' });
+    }
+    if (bvnVerified) {
+      current += 100;
+      points.push({ score: current, delta: 100, event: 'BVN Verification Boost', timestamp: 'May 14' });
+    }
+    
+    return points.reverse(); // Newest first for the list
+  }, [fullName, skills, voiceBio, bvnVerified]);
+
+  const [scoreData, setScoreData]       = useState<TrustScoreResponse>({
+    ...MOCK_SCORE,
+    score: initialScore,
+    band: initialScore >= 500 ? 'Established' : 'Developing'
+  });
   const [history, setHistory]           = useState<number[]>(MOCK_HISTORY.map((h) => h.score));
   const [explanation, setExplanation]   = useState<ScoreExplanation | null>(null);
   const [loading, setLoading]           = useState(true);

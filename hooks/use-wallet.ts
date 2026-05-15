@@ -11,6 +11,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, ApiError, NetworkError } from '@/services/apiClient';
 import { ENDPOINTS, POLL_INTERVAL } from '@/constants/api';
+import { useOnboardingStore } from '@/store/onboarding-store';
 
 // ─── API response types (Squad-shaped) ───────────────────────────────────────
 
@@ -61,26 +62,15 @@ export interface SendMoneyResult {
 // ─── Mock fallback data ───────────────────────────────────────────────────────
 
 const MOCK_BALANCE: WalletBalance = {
-  balance: 42350,
+  balance: 0,
   currency: 'NGN',
-  account_number: '8021483560',
-  bank_name: 'Wema Bank (Squad)',
-  kyc_tier: 2,
+  account_number: '—',
+  bank_name: 'Squad',
+  kyc_tier: 1,
   is_active: true,
 };
 
-const MOCK_TRANSACTIONS: WalletTransaction[] = [
-  { id: 'txn_001', type: 'credit',  amount: 15000, description: 'Gig payment received',  counterparty: 'Emeka Okafor',       category: 'Income',   icon: '💼', timestamp: new Date(Date.now() - 2.7e6).toISOString(),  balance_after: 42350, reference: 'KR240513001' },
-  { id: 'txn_002', type: 'debit',   amount: 3500,  description: 'Food & supplies',        counterparty: "Mama's Kitchen",     category: 'Food',     icon: '🍲', timestamp: new Date(Date.now() - 1.08e7).toISOString(), balance_after: 27350, reference: 'KR240513002' },
-  { id: 'txn_003', type: 'savings', amount: 5000,  description: 'Savings deposit',        counterparty: 'Emergency Fund',     category: 'Savings',  icon: '🏦', timestamp: new Date(Date.now() - 2.16e7).toISOString(), balance_after: 30850, reference: 'KR240513003' },
-  { id: 'txn_004', type: 'credit',  amount: 20000, description: 'Wallet funding',         counterparty: 'GTBank •• 4421',     category: 'Funding',  icon: '⬇️', timestamp: new Date(Date.now() - 8.64e7).toISOString(), balance_after: 35850, reference: 'KR240512001' },
-  { id: 'txn_005', type: 'debit',   amount: 5000,  description: 'Transfer to bank',       counterparty: 'First Bank •• 8821', category: 'Transfer', icon: '🏧', timestamp: new Date(Date.now() - 9.36e7).toISOString(), balance_after: 15850, reference: 'KR240512002' },
-  { id: 'txn_006', type: 'credit',  amount: 8000,  description: 'Service payment',        counterparty: 'Adaeze Nwosu',       category: 'Income',   icon: '⚙️', timestamp: new Date(Date.now() - 1.728e8).toISOString(), balance_after: 20850, reference: 'KR240511001' },
-  { id: 'txn_007', type: 'debit',   amount: 500,   description: 'Airtime purchase',       counterparty: 'MTN Nigeria',        category: 'Utilities',icon: '📱', timestamp: new Date(Date.now() - 1.8e8).toISOString(),  balance_after: 12850, reference: 'KR240511002' },
-  { id: 'txn_008', type: 'debit',   amount: 1200,  description: 'Market purchase',        counterparty: 'Balogun Market',     category: 'Shopping', icon: '🛒', timestamp: new Date(Date.now() - 2.592e8).toISOString(), balance_after: 13350, reference: 'KR240510001' },
-  { id: 'txn_009', type: 'savings', amount: 2000,  description: 'Savings deposit',        counterparty: 'Device Fund',        category: 'Savings',  icon: '🏦', timestamp: new Date(Date.now() - 3.456e8).toISOString(), balance_after: 14550, reference: 'KR240509001' },
-  { id: 'txn_010', type: 'credit',  amount: 12500, description: 'Gig payment received',  counterparty: 'Chukwudi Builders',  category: 'Income',   icon: '🏗', timestamp: new Date(Date.now() - 4.32e8).toISOString(),  balance_after: 16550, reference: 'KR240508001' },
-];
+const MOCK_TRANSACTIONS: WalletTransaction[] = [];
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
@@ -97,6 +87,8 @@ interface UseWalletReturn {
 }
 
 export function useWallet(): UseWalletReturn {
+  const { fullName } = useOnboardingStore();
+
   const [balance, setBalance]           = useState<WalletBalance | null>(null);
   const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
   const [loading, setLoading]           = useState(true);
@@ -137,11 +129,14 @@ export function useWallet(): UseWalletReturn {
       setTransactions(data.transactions);
     } catch {
       // Silently fall back to mock transactions
-      setTransactions(MOCK_TRANSACTIONS);
+      const personalized = MOCK_TRANSACTIONS.map(t => 
+        t.id === 'txn_004' ? { ...t, description: `Funding for ${fullName || 'User'}` } : t
+      );
+      setTransactions(personalized);
     } finally {
       setTxnLoading(false);
     }
-  }, []);
+  }, [fullName]);
 
   const refetch = useCallback(async () => {
     setLoading(true);

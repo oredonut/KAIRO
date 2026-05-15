@@ -2,7 +2,7 @@ import { router } from "expo-router";
 import { View, Text, Pressable } from "react-native";
 import { useOnboardingStore } from "../../store/onboarding-store";
 import { useTrustStore } from "../../store/trust-store";
-import VoiceRecorder from "../../components/VoiceRecorder";
+import VoiceRecorderCard from "../../components/VoiceRecorderCard";
 import { Palette, Typography, Spacing, Radius } from "@/constants/theme";
 import Animated, { FadeInDown } from "react-native-reanimated";
 
@@ -23,8 +23,8 @@ export default function Voice() {
             </Animated.Text>
 
             <Animated.View entering={FadeInDown.delay(300).duration(600)} style={{ flex: 1 }}>
-                <VoiceRecorder
-                    onRecordingComplete={(uri: string) => {
+                <VoiceRecorderCard
+                    onSave={(uri: string) => {
                         set({ voiceBio: uri });
                     }}
                 />

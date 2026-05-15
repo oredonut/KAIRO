@@ -23,7 +23,7 @@ export default function Complete() {
 
             <Animated.View entering={FadeInDown.delay(800).duration(600)} style={{ paddingBottom: Spacing[8] }}>
                 <Pressable
-                    onPress={() => router.replace("/(tabs)/home" as any)}
+                    onPress={() => router.replace("/(auth)/register" as any)}
                     style={({ pressed }) => ({
                         backgroundColor: Palette.gold[500],
                         paddingVertical: Spacing[4],
@@ -43,7 +43,7 @@ export default function Complete() {
                         fontSize: Typography.size.base,
                         letterSpacing: 1 
                     }}>
-                        ENTER APP
+                        CREATE ACCOUNT
                     </Text>
                 </Pressable>
             </Animated.View>

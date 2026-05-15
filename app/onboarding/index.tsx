@@ -66,6 +66,15 @@ export default function Intro() {
                         GET STARTED
                     </Text>
                 </Pressable>
+
+                <Pressable 
+                    onPress={() => router.push("/(auth)/login" as any)}
+                    style={{ marginTop: Spacing[6] }}
+                >
+                    <Text style={{ color: Palette.dark[300], textAlign: "center", fontSize: Typography.size.sm }}>
+                        Already have an account? <Text style={{ color: Palette.gold[500], fontWeight: 'bold' }}>Login</Text>
+                    </Text>
+                </Pressable>
             </Animated.View>
         </View>
     );
