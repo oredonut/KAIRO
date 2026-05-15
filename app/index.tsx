@@ -1,81 +1,58 @@
-import { motion } from "framer-motion";
+import { useRouter } from "expo-router";
 import { useEffect } from "react";
+import { Text, View } from "react-native";
+import Animated, {
+    FadeIn,
+    interpolate,
+    useAnimatedStyle,
+    useSharedValue,
+    withTiming,
+} from "react-native-reanimated";
 
-export default function SplashScreen({ onFinish }: { onFinish: () => void }) {
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      onFinish();
-    }, 4200);
+export default function Splash() {
+    const router = useRouter();
+    const progress = useSharedValue(0);
 
-    return () => clearTimeout(timer);
-  }, [onFinish]);
+    useEffect(() => {
+        progress.value = withTiming(1, { duration: 2000 });
 
-  return (
-    <div className="h-screen w-screen bg-white flex items-center justify-center overflow-hidden">
-      <div className="flex flex-col items-center">
+        setTimeout(() => {
+            router.replace("/onboarding" as any);
+        }, 2500);
+    }, []);
 
-        {/* Logo Animation */}
-        <motion.img
-          src="/kairo-logo.svg"
-          alt="Kairo Logo"
-          className="w-36 h-36 object-contain"
-          initial={{
-            opacity: 0,
-            scale: 0.7,
-            y: 30,
-          }}
-          animate={{
-            opacity: 1,
-            scale: 1,
-            y: 0,
-          }}
-          transition={{
-            duration: 1.2,
-            ease: [0.22, 1, 0.36, 1],
-          }}
-        />
+    const style = useAnimatedStyle(() => ({
+        opacity: interpolate(progress.value, [0, 1], [0.3, 1]),
+        transform: [
+            { scale: interpolate(progress.value, [0, 1], [0.9, 1.05]) },
+        ],
+    }));
 
-        {/* KAIRO Text */}
-        <motion.h1
-          initial={{
-            opacity: 0,
-            y: 20,
-            letterSpacing: "0.8em",
-          }}
-          animate={{
-            opacity: 1,
-            y: 0,
-            letterSpacing: "0.35em",
-          }}
-          transition={{
-            delay: 0.7,
-            duration: 1,
-          }}
-          className="mt-6 text-4xl font-light uppercase text-[#C9A54D]"
+    return (
+        <View
+            style={{
+                flex: 1,
+                backgroundColor: "#0D0D0D", // Palette.dark[900]
+                justifyContent: "center",
+                alignItems: "center",
+            }}
         >
-          kairo
-        </motion.h1>
+            <Animated.View
+                entering={FadeIn.duration(1000)}
+                style={[
+                    { alignItems: 'center', justifyContent: 'center' },
+                    style,
+                ]}
+            >
+                <Animated.Image 
+                    source={require("../assets/images/kairo-logo-gold.png")}
+                    style={{ width: 180, height: 180, resizeMode: 'contain' }}
+                />
+            </Animated.View>
 
-        {/* Tagline */}
-        <motion.p
-          initial={{
-            opacity: 0,
-            y: 12,
-          }}
-          animate={{
-            opacity: 1,
-            y: 0,
-          }}
-          transition={{
-            delay: 1.5,
-            duration: 1,
-          }}
-          className="mt-4 text-sm md:text-base text-gray-500 tracking-wide text-center px-6"
-        >
-          The moment possibilities become opportunities
-        </motion.p>
-
-      </div>
-    </div>
-  );
+            <Animated.Text entering={FadeIn.delay(500).duration(800)} style={{ color: "#999", marginTop: 24, fontSize: 16, letterSpacing: 1 }}>
+                Where Possibilities Become Opportunities
+            </Animated.Text>
+        </View>
+    );
 }

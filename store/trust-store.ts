@@ -11,7 +11,7 @@ type State = {
     update: (step: string) => void;
 };
 
-export const useTrustStore = create<State>((set, get) => ({
+export const useTrustStore = create<State>()((set, get) => ({
     score: 0,
 
     identity: 0,
@@ -19,7 +19,7 @@ export const useTrustStore = create<State>((set, get) => ({
     engagement: 0,
     consistency: 0,
 
-    update: (step) => {
+    update: (step: string) => {
         const current = get();
 
         let delta = 0;

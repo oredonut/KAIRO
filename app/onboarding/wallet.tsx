@@ -2,22 +2,73 @@ import { View, Text, Pressable } from "react-native";
 import { useOnboardingStore } from "../../store/onboarding-store";
 import { useTrustStore } from "../../store/trust-store";
 import { router } from "expo-router";
+import { Palette, Typography, Spacing, Radius } from "@/constants/theme";
+import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
+import { IconSymbol } from "@/components/ui/icon-symbol";
 
 export default function Wallet() {
     const { set } = useOnboardingStore();
-    const update = useTrustStore((s) => s.update);
+    const update = useTrustStore((s: any) => s.update);
 
     return (
-        <View style={{ flex: 1, padding: 24 }}>
-            <Pressable
-                onPress={() => {
-                    set({ walletCreated: true });
-                    update("wallet");
-                    router.push("/onboarding/complete" as any);
-                }}
-            >
-                <Text>Create Wallet</Text>
-            </Pressable>
+        <View style={{ flex: 1, backgroundColor: Palette.dark[900], padding: Spacing[6], paddingTop: Spacing[12], justifyContent: 'space-between' }}>
+            <View>
+                <Animated.Text entering={FadeInDown.duration(600)} style={{ color: Palette.gold[500], fontWeight: '900', letterSpacing: 2, fontSize: Typography.size.sm, marginBottom: Spacing[2] }}>
+                    STEP 5 OF 5
+                </Animated.Text>
+                <Animated.Text entering={FadeInDown.delay(100).duration(600)} style={{ fontSize: Typography.size['3xl'], fontWeight: Typography.weight.bold, color: Palette.white.pure, marginBottom: Spacing[2] }}>
+                    Get your wallet
+                </Animated.Text>
+                <Animated.Text entering={FadeInDown.delay(150).duration(600)} style={{ color: Palette.dark[300], fontSize: Typography.size.base, marginBottom: Spacing[8] }}>
+                    Receive payments, access micro-loans, and grow your hustle with your new KAIRO wallet.
+                </Animated.Text>
+
+                <Animated.View entering={FadeIn.delay(300).duration(600)} style={{ alignItems: 'center', marginTop: Spacing[4] }}>
+                    <View style={{ 
+                        width: 160, 
+                        height: 160, 
+                        borderRadius: Radius.full, 
+                        backgroundColor: Palette.dark[800],
+                        borderWidth: 2,
+                        borderColor: Palette.gold[500],
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        shadowColor: Palette.gold[500],
+                        shadowOffset: { width: 0, height: 0 },
+                        shadowOpacity: 0.2,
+                        shadowRadius: 20,
+                        elevation: 10,
+                    }}>
+                        <IconSymbol name="creditcard.fill" size={64} color={Palette.gold[400]} />
+                    </View>
+                </Animated.View>
+            </View>
+
+            <Animated.View entering={FadeInDown.delay(600).duration(600)} style={{ paddingBottom: Spacing[8] }}>
+                <Pressable
+                    onPress={() => {
+                        set({ walletCreated: true });
+                        update("wallet");
+                        router.push("/onboarding/complete" as any);
+                    }}
+                    style={({ pressed }) => ({
+                        backgroundColor: Palette.gold[500],
+                        paddingVertical: Spacing[4],
+                        borderRadius: Radius.full,
+                        opacity: pressed ? 0.8 : 1,
+                    })}
+                >
+                    <Text style={{ 
+                        color: Palette.dark[900], 
+                        textAlign: "center", 
+                        fontWeight: '900', 
+                        fontSize: Typography.size.base,
+                        letterSpacing: 1 
+                    }}>
+                        CREATE MY WALLET
+                    </Text>
+                </Pressable>
+            </Animated.View>
         </View>
     );
 }
