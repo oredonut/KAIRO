@@ -99,7 +99,7 @@ export default function EditProfileScreen() {
         { text: 'Cancel', style: 'cancel' },
         { 
           text: 'Add', 
-          onPress: (skill) => {
+          onPress: (skill: string | undefined) => {
             if (skill && !skills.includes(skill)) {
               set({ skills: [...skills, skill] });
             }

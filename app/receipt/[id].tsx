@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
   trustDesc: { flex: 1, fontSize: 10, color: Palette.dark[600], lineHeight: 14 },
 
   qrArea: { alignItems: 'center', marginTop: Spacing[8] },
-  qrBox: { width: 80, height: 80, backgroundColor: '#F1F5F9', borderRadius: 8, alignItems: 'center', justifyContent: 'center', borderWeight: 1, borderColor: '#E2E8F0' },
+  qrBox: { width: 80, height: 80, backgroundColor: '#F1F5F9', borderRadius: 8, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#E2E8F0' },
   qrText: { fontSize: 10, color: Palette.dark[400], marginTop: 8, textAlign: 'center' },
 
   noticeBox: { marginTop: Spacing[6], paddingHorizontal: Spacing[4] },

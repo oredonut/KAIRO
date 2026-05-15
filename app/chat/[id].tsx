@@ -27,7 +27,7 @@ interface Message {
   timestamp: string;
   type?: 'text' | 'offer';
   offerAmount?: number;
-  status?: 'pending' | 'accepted' | 'paid';
+  status?: 'pending' | 'accepted' | 'paid' | 'declined';
 }
 
 export default function ChatScreen() {
@@ -415,8 +415,8 @@ const styles = StyleSheet.create({
   },
   modalSheet: {
     backgroundColor: Palette.white.pure,
-    borderTopLeftRadius: Radius['3xl'],
-    borderTopRightRadius: Radius['3xl'],
+    borderTopLeftRadius: Radius['2xl'],
+    borderTopRightRadius: Radius['2xl'],
     padding: Spacing[6],
     paddingBottom: Platform.OS === 'ios' ? 40 : 30,
   },

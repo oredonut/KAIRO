@@ -131,7 +131,7 @@ export function useTrustScore(): UseTrustScoreReturn {
     score: initialScore,
     band: initialScore >= 500 ? 'Established' : 'Developing'
   });
-  const [history, setHistory]           = useState<number[]>(MOCK_HISTORY.map((h) => h.score));
+  const [history, setHistory]           = useState<ScoreHistoryPoint[]>(historyPoints);
   const [explanation, setExplanation]   = useState<ScoreExplanation | null>(null);
   const [loading, setLoading]           = useState(true);
   const [error, setError]               = useState<string | null>(null);
@@ -160,11 +160,11 @@ export function useTrustScore(): UseTrustScoreReturn {
   const fetchHistory = useCallback(async () => {
     try {
       const data = await api.get<ScoreHistoryPoint[]>(ENDPOINTS.scores.history);
-      setHistory(data.map((h) => h.score));
+      setHistory(data);
     } catch {
-      setHistory(MOCK_HISTORY.map((h) => h.score));
+      setHistory(historyPoints);
     }
-  }, []);
+  }, [historyPoints]);
 
   const fetchExplanation = useCallback(async () => {
     try {
@@ -202,9 +202,9 @@ export function useTrustScore(): UseTrustScoreReturn {
     signalKey: string,
     explanationText: string,
   ) => {
-    setScoreData((prev) => {
-      const newScore = Math.min(1000, Math.max(0, prev.score + delta));
+    const newScore = Math.min(1000, Math.max(0, scoreData.score + delta));
 
+    setScoreData((prev) => {
       // Update the relevant signal fill
       const updatedSignals = prev.signals.map((s) => {
         if (s.key !== signalKey) return s;
@@ -223,8 +223,13 @@ export function useTrustScore(): UseTrustScoreReturn {
     });
 
     setHistory((prev) => {
-      const last = prev[prev.length - 1] ?? MOCK_SCORE.score;
-      return [...prev.slice(-6), Math.min(1000, Math.max(0, last + delta))];
+      const newPoint: ScoreHistoryPoint = {
+        score: newScore,
+        delta,
+        event: explanationText,
+        timestamp: new Date().toLocaleDateString('en-NG', { day: 'numeric', month: 'short' }),
+      };
+      return [newPoint, ...prev.slice(0, 5)];
     });
 
     setExplanation({

@@ -17,6 +17,7 @@ import { useTrustScore } from '@/hooks/use-trust-score';
 import { useWallet } from '@/hooks/use-wallet';
 import { useTranslation } from '@/hooks/use-translation';
 import { useNotifications } from '@/hooks/use-notifications';
+import { useInsights } from '@/hooks/use-insights';
 import Animated, { FadeInUp, ZoomIn } from 'react-native-reanimated';
 
 const C = Colors.light;
@@ -53,6 +54,7 @@ export default function HomeScreen() {
   const { fullName, profileImage, bvnVerified } = useOnboardingStore();
   const { score, band } = useTrustScore();
   const { balance } = useWallet();
+  const { pulse, advice, loading: insightsLoading } = useInsights();
 
   const { t, language, toggleLanguage } = useTranslation();
   const { unreadCount } = useNotifications();
@@ -172,43 +174,38 @@ export default function HomeScreen() {
         </View>
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.insightScroll} contentContainerStyle={styles.insightContent}>
-          <View style={[styles.insightCard, { backgroundColor: '#FFFDF0', borderColor: '#FDF0A0' }]}>
-            <Text style={styles.insightIcon}>📈</Text>
-            <Text style={styles.insightText}>Demand for <Text style={{ fontWeight: 'bold' }}>Dispatch Riders</Text> in Lagos is up 15% today.</Text>
-          </View>
-          <View style={[styles.insightCard, { backgroundColor: '#F0F9FF', borderColor: '#BAE6FD' }]}>
-            <Text style={styles.insightIcon}>🛡️</Text>
-            <Text style={styles.insightText}>Users with <Text style={{ fontWeight: 'bold' }}>500+ score</Text> are seeing 2x job offers.</Text>
-          </View>
+          {pulse.map((item) => (
+            <View key={item.id} style={[styles.insightCardSmall, { backgroundColor: item.color, borderColor: item.borderColor }]}>
+              <Text style={styles.insightIcon}>{item.icon}</Text>
+              <Text style={styles.insightText}>{item.description}</Text>
+            </View>
+          ))}
         </ScrollView>
 
-        {/* AI Hustle Insight */}
-        <Animated.View 
-          entering={FadeInUp.delay(200)}
-          style={styles.insightCard}
-        >
-          <View style={styles.insightHeader}>
-            <View style={styles.aiBadge}>
-              <Text style={styles.aiBadgeText}>AI COACH</Text>
-            </View>
-            <Text style={styles.insightTitle}>{t('ai_coach')}</Text>
-          </View>
-          
-          <Text style={styles.insightBody}>
-            {!bvnVerified 
-              ? t('insight_bvn') 
-              : score < 600 
-                ? t('insight_loan') 
-                : t('insight_skills')}
-          </Text>
-
-          <Pressable 
-            onPress={() => !bvnVerified ? router.push('/profile/edit') : router.push('/portfolio')}
-            style={styles.insightBtn}
+        {advice && (
+          <Animated.View 
+            entering={FadeInUp.delay(200)}
+            style={styles.insightCard}
           >
-            <Text style={styles.insightBtnText}>{t('insight_btn')} →</Text>
-          </Pressable>
-        </Animated.View>
+            <View style={styles.insightHeader}>
+              <View style={styles.aiBadge}>
+                <Text style={styles.aiBadgeText}>AI COACH</Text>
+              </View>
+              <Text style={styles.insightTitle}>{advice.title}</Text>
+            </View>
+            
+            <Text style={styles.insightBody}>
+              {advice.body}
+            </Text>
+
+            <Pressable 
+              onPress={() => router.push(advice.actionRoute as any)}
+              style={styles.insightBtn}
+            >
+              <Text style={styles.insightBtnText}>{advice.actionLabel} →</Text>
+            </Pressable>
+          </Animated.View>
+        )}
 
         {/* Quick Actions */}
         <Text style={[styles.sectionTitle, { marginTop: Spacing[6], marginBottom: Spacing[4], paddingHorizontal: Spacing[5] }]}>
@@ -423,7 +420,7 @@ const styles = StyleSheet.create({
   // Insights
   insightScroll: { paddingLeft: Spacing[5] },
   insightContent: { paddingRight: Spacing[10] },
-  insightCard: {
+  insightCardSmall: {
     width: 260,
     padding: Spacing[4],
     borderRadius: Radius.xl,
