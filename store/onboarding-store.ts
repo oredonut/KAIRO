@@ -12,7 +12,7 @@ type State = {
     set: (data: Partial<State>) => void;
 };
 
-export const useOnboardingStore = create<State>((set) => ({
+export const useOnboardingStore = create<State>()((set) => ({
     fullName: "",
     phone: "",
     location: "",
@@ -21,5 +21,5 @@ export const useOnboardingStore = create<State>((set) => ({
     workSample: null,
     walletCreated: false,
 
-    set: (data) => set((s) => ({ ...s, ...data })),
+    set: (data: Partial<State>) => set((s: State) => ({ ...s, ...data })),
 }));

@@ -8,7 +8,7 @@ import { useEffect } from "react";
 import { useTrustStore } from "../store/trust-store";
 
 export default function TrustScore() {
-    const score = useTrustStore((s) => s.score);
+    const score = useTrustStore((s: any) => s.score);
     const progress = useSharedValue(0);
 
     useEffect(() => {
