@@ -36,11 +36,11 @@ export const ENDPOINTS = {
 
   // Wallet (Squad-backed)
   wallet: {
-    balance:  `${API_ROOT}/wallets/balance`,
-    fund:     `${API_ROOT}/wallets/fund`,
-    send:     `${API_ROOT}/wallets/send`,
-    withdraw: `${API_ROOT}/wallets/withdraw`,
-    history:  `${API_ROOT}/wallets/history`,
+    balance:  `${API_ROOT}/wallet/balance`,
+    fund:     `${API_ROOT}/wallet/fund`,
+    send:     `${API_ROOT}/wallet/send`,
+    withdraw: `${API_ROOT}/wallet/withdraw`,
+    history:  `${API_ROOT}/wallet/history`,
   },
 
   // Transactions
