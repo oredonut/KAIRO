@@ -54,3 +54,35 @@ async def on_payment_received(user_id: str, amount: float, reference: str):
         "amount": amount,
         "reference": reference
     })
+
+async def on_loan_applied(user_id: str, amount: float, loan_id: str):
+    """Specific trigger for loan application."""
+    await trigger_n8n("loan-applied", {
+        "user_id": user_id,
+        "amount": amount,
+        "loan_id": loan_id
+    })
+
+async def on_fraud_flagged(user_id: str, transaction_id: str, score: float, severity: str):
+    """Specific trigger for fraud alerts."""
+    await trigger_n8n("fraud-flagged", {
+        "user_id": user_id,
+        "transaction_id": transaction_id,
+        "score": score,
+        "severity": severity
+    })
+
+async def on_user_registered(user_id: str, full_name: str, phone: str):
+    """Specific trigger for user registration."""
+    await trigger_n8n("user-registered", {
+        "user_id": user_id,
+        "full_name": full_name,
+        "phone": phone
+    })
+
+async def on_voice_journal_saved(user_id: str, journal_id: str):
+    """Specific trigger for voice journal processing."""
+    await trigger_n8n("voice-journal-saved", {
+        "user_id": user_id,
+        "journal_id": journal_id
+    })

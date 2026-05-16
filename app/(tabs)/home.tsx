@@ -19,6 +19,9 @@ import { useTranslation } from '@/hooks/use-translation';
 import { useNotifications } from '@/hooks/use-notifications';
 import { useInsights } from '@/hooks/use-insights';
 import Animated, { FadeInUp, ZoomIn } from 'react-native-reanimated';
+import { api } from '@/services/apiClient';
+import { ENDPOINTS } from '@/constants/api';
+import { Alert } from 'react-native';
 
 const C = Colors.light;
 
@@ -275,6 +278,35 @@ export default function HomeScreen() {
           </View>
           <Text style={styles.promoIcon}>📂</Text>
         </View>
+
+        {/* Debug Squad Test */}
+        {__DEV__ && (
+          <Pressable 
+            onPress={async () => {
+              try {
+                const banks = await api.get(ENDPOINTS.wallet.banks);
+                if (Array.isArray(banks) && banks.length > 0) {
+                  Alert.alert("Squad Status: OK ✅", `Successfully fetched ${banks.length} banks from Squad API.`);
+                } else {
+                  throw new Error("Empty bank list returned");
+                }
+              } catch (err: any) {
+                Alert.alert("Squad Status: ERROR ❌", err.message || "Failed to connect to Squad API");
+              }
+            }}
+            style={{ 
+              margin: Spacing[5], 
+              padding: Spacing[4], 
+              backgroundColor: Palette.dark[800], 
+              borderRadius: Radius.lg,
+              borderWidth: 1,
+              borderColor: Palette.dark[600],
+              alignItems: 'center'
+            }}
+          >
+            <Text style={{ color: Palette.gold[500], fontWeight: 'bold', fontSize: 10 }}>🛠️ TEST SQUAD CONNECTION</Text>
+          </Pressable>
+        )}
 
         <View style={{ height: 100 }} />
       </ScrollView>

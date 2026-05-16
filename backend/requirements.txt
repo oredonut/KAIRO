@@ -37,3 +37,4 @@ python-multipart>=0.0.9   # for UploadFile support in FastAPI
 numpy>=1.26.0             # fraud detection feature vectors
 deep-translator>=1.11.0   # language translation for TTS
 langdetect>=1.0.9         # language detection
+cloudinary>=1.41.0        # cloud storage for audio/images

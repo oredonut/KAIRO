@@ -6,11 +6,11 @@ from loguru import logger
 from app.core.config import settings
 
 
-BASE = settings.SQUAD_BASE_URL
-HEADERS = {
-    "Authorization": f"Bearer {settings.SQUAD_SECRET_KEY}",
-    "Content-Type": "application/json",
-}
+def get_headers():
+    return {
+        "Authorization": f"Bearer {settings.SQUAD_SECRET_KEY}",
+        "Content-Type": "application/json",
+    }
 
 
 # ── Customer + Virtual Account ─────────────────────────────────
@@ -30,8 +30,8 @@ async def create_customer(
 
     async with httpx.AsyncClient(timeout=30) as c:
         resp = await c.post(
-            f"{BASE}/merchant/create-customer",
-            headers=HEADERS,
+            f"{settings.SQUAD_BASE_URL}/merchant/create-customer",
+            headers=get_headers(),
             json={
                 "first_name": first,
                 "last_name": last,
@@ -67,8 +67,8 @@ async def create_virtual_account(
 
     async with httpx.AsyncClient(timeout=30) as c:
         resp = await c.post(
-            f"{BASE}/virtual-account",
-            headers=HEADERS,
+            f"{settings.SQUAD_BASE_URL}/virtual-account",
+            headers=get_headers(),
             json=payload,
         )
     data = resp.json()
@@ -112,8 +112,8 @@ async def verify_receiver(account_number: str, bank_code: str) -> dict:
     """
     async with httpx.AsyncClient(timeout=15) as c:
         resp = await c.post(
-            f"{BASE}/payout/account/lookup",
-            headers=HEADERS,
+            f"{settings.SQUAD_BASE_URL}/payout/account/lookup",
+            headers=get_headers(),
             json={"bank_code": bank_code, "account_number": account_number},
         )
     data = resp.json()
@@ -147,8 +147,8 @@ async def initiate_transfer(
 
     async with httpx.AsyncClient(timeout=30) as c:
         resp = await c.post(
-            f"{BASE}/payout/initiate",
-            headers=HEADERS,
+            f"{settings.SQUAD_BASE_URL}/payout/initiate",
+            headers=get_headers(),
             json={
                 "transaction_reference": reference,
                 "amount": amount_kobo,
@@ -181,8 +181,8 @@ async def disburse_loan(
     reference = f"LOAN-{loan_id[:8]}-{uuid.uuid4().hex[:6]}"
     async with httpx.AsyncClient(timeout=30) as c:
         resp = await c.post(
-            f"{BASE}/payout/initiate",
-            headers=HEADERS,
+            f"{settings.SQUAD_BASE_URL}/payout/initiate",
+            headers=get_headers(),
             json={
                 "transaction_reference": reference,
                 "amount": int(amount_naira * 100),
@@ -219,8 +219,8 @@ async def get_transactions(
 
     async with httpx.AsyncClient(timeout=15) as c:
         resp = await c.get(
-            f"{BASE}/transaction/query",
-            headers=HEADERS,
+            f"{settings.SQUAD_BASE_URL}/transaction/query",
+            headers=get_headers(),
             params=params,
         )
     data = resp.json()
@@ -231,8 +231,8 @@ async def get_transaction_by_ref(reference: str) -> dict:
     """Fetch a single transaction detail by reference."""
     async with httpx.AsyncClient(timeout=15) as c:
         resp = await c.get(
-            f"{BASE}/transaction/{reference}",
-            headers=HEADERS,
+            f"{settings.SQUAD_BASE_URL}/transaction/{reference}",
+            headers=get_headers(),
         )
     return resp.json().get("data", {})
 
@@ -261,19 +261,18 @@ async def verify_bvn(bvn: str) -> dict:
     """
     async with httpx.AsyncClient(timeout=15) as c:
         resp = await c.get(
-            f"{BASE}/payout/bvn/lookup?bvn={bvn}",
-            headers=HEADERS,
+            f"{settings.SQUAD_BASE_URL}/payout/bvn/lookup?bvn={bvn}",
+            headers=get_headers(),
         )
     
-    if resp.status_code != 200:
-        logger.error(f"Squad BVN lookup error: {resp.text}")
-        raise ValueError("Identity service temporarily unavailable")
-
     data = resp.json()
-    logger.info(f"Squad verify_bvn: {data}")
-    
+    logger.info(f"Squad verify_bvn response status {resp.status_code}: {data}")
+
+    if resp.status_code != 200:
+        msg = data.get("message", "Identity service temporarily unavailable")
+        raise ValueError(msg)
+
     if data.get("success"):
-        # Squad returns data.data with keys: first_name, last_name, dob, mobile
         return data["data"]
     
     raise ValueError(data.get("message", "BVN verification failed"))

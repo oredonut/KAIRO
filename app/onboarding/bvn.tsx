@@ -5,29 +5,62 @@ import { useOnboardingStore } from "../../store/onboarding-store";
 import { useTrustStore } from "../../store/trust-store";
 import { Palette, Typography, Spacing, Radius } from "@/constants/theme";
 import Animated, { FadeInDown, FadeInUp, ZoomIn } from "react-native-reanimated";
+import { api } from "@/services/apiClient";
+import { ENDPOINTS } from "@/constants/api";
 
 export default function BVNVerification() {
     const { bvn, set } = useOnboardingStore();
     const update = useTrustStore((s: any) => s.update);
     const [verifying, setVerifying] = useState(false);
     const [verified, setVerified] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [verifiedName, setVerifiedName] = useState<string | null>(null);
 
-    const handleVerify = () => {
+    const handleVerify = async () => {
         if (bvn.length !== 11) return;
         
         setVerifying(true);
-        // Simulate real NIBSS verification delay
-        setTimeout(() => {
-            setVerifying(false);
+        setError(null);
+
+        try {
+            // ── MOCK MODE ───────────────────────────────────────────
+            // We are skipping the real API call for now to let you move on.
+            // Simply simulating a short delay and then success.
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
             setVerified(true);
+            setVerifiedName("Test User"); // Mock name
             set({ bvnVerified: true });
             
-            // Give it a moment to show success before moving on
+            // Auto-navigate after success
             setTimeout(() => {
                 update("identity"); // This boosts the trust score
                 router.push("/onboarding/skills" as any);
-            }, 1500);
-        }, 2500);
+            }, 2000);
+
+            /* 
+            // REAL LOGIC (SAVED FOR LATER)
+            const response: any = await api.post(ENDPOINTS.auth.verifyBvn, { bvn }, { skipAuth: true });
+            if (response.verified) {
+                setVerified(true);
+                setVerifiedName(response.full_name);
+                set({ bvnVerified: true });
+                
+                // Give it a moment to show success before moving on
+                setTimeout(() => {
+                    update("identity"); // This boosts the trust score
+                    router.push("/onboarding/skills" as any);
+                }, 2000);
+            } else {
+                setError(response.message || "Verification failed");
+            }
+            */
+        } catch (err: any) {
+            console.error("BVN Verification error:", err);
+            setError("Service unavailable. Please try again later.");
+        } finally {
+            setVerifying(false);
+        }
     };
 
     return (
@@ -72,7 +105,7 @@ export default function BVNVerification() {
                                 <Text style={{ fontSize: 40 }}>✅</Text>
                             </View>
                             <Text style={{ color: Palette.white.pure, marginTop: Spacing[6], fontSize: Typography.size.lg, fontWeight: 'bold' }}>
-                                BVN Verified
+                                {verifiedName || "BVN Verified"}
                             </Text>
                             <Text style={{ color: Palette.gold[400], marginTop: Spacing[2], fontSize: Typography.size.sm, fontWeight: '600' }}>
                                 +50 Trust Score Bonus Applied
@@ -85,7 +118,7 @@ export default function BVNVerification() {
                                 borderRadius: Radius.xl, 
                                 paddingHorizontal: Spacing[4], 
                                 borderWidth: 1, 
-                                borderColor: bvn.length === 11 ? Palette.gold[500] : Palette.dark[600],
+                                borderColor: error ? '#ff4444' : (bvn.length === 11 ? Palette.gold[500] : Palette.dark[600]),
                                 flexDirection: 'row',
                                 alignItems: 'center'
                             }}>
@@ -94,7 +127,10 @@ export default function BVNVerification() {
                                     placeholder="Enter 11-digit BVN"
                                     placeholderTextColor={Palette.dark[400]}
                                     value={bvn}
-                                    onChangeText={(t) => set({ bvn: t.replace(/[^0-9]/g, '').slice(0, 11) })}
+                                    onChangeText={(t) => {
+                                        setError(null);
+                                        set({ bvn: t.replace(/[^0-9]/g, '').slice(0, 11) });
+                                    }}
                                     keyboardType="number-pad"
                                     secureTextEntry={false}
                                     style={{ 
@@ -107,6 +143,12 @@ export default function BVNVerification() {
                                     }}
                                 />
                             </View>
+                            
+                            {error && (
+                                <Text style={{ color: '#ff4444', marginTop: Spacing[2], fontSize: 12 }}>
+                                    {error}
+                                </Text>
+                            )}
                             
                             <View style={{ marginTop: Spacing[6], flexDirection: 'row', alignItems: 'center', gap: Spacing[2] }}>
                                 <Text style={{ fontSize: 14 }}>🔒</Text>
