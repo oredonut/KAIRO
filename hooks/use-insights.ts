@@ -19,6 +19,16 @@ export interface AIAdvice {
   actionRoute: string;
 }
 
+export interface JobMatch {
+  id: string;
+  role: string;
+  company: string;
+  reason: string;
+  fitScore: number;
+  salary?: string;
+  location: string;
+}
+
 export function useInsights() {
   const { skills, bvnVerified } = useOnboardingStore();
   const category = skills[0] || 'Artisans';
@@ -26,6 +36,7 @@ export function useInsights() {
   
   const [pulse, setPulse] = useState<MarketPulseInsight[]>([]);
   const [advice, setAdvice] = useState<AIAdvice | null>(null);
+  const [jobMatches, setJobMatches] = useState<JobMatch[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchInsights = useCallback(async () => {
@@ -90,8 +101,31 @@ export function useInsights() {
       };
     }
 
+    // AI Job Matching Logic
+    const matches: JobMatch[] = [
+      {
+        id: 'j1',
+        role: `Lead ${category}`,
+        company: 'Apex Infrastructure Ltd',
+        reason: `Your skill in ${category} combined with your high Trust Score (820+) makes you a perfect fit for this supervision role.`,
+        fitScore: 98,
+        salary: '₦180,000 / Monthly',
+        location: 'Victoria Island'
+      },
+      {
+        id: 'j2',
+        role: `Freelance ${category}`,
+        company: 'Urban Builders',
+        reason: 'They prioritize pros with verified transaction histories, which you currently excel in.',
+        fitScore: 88,
+        salary: '₦45,000 / Project',
+        location: 'Ikeja'
+      }
+    ];
+
     setPulse(marketPulse);
     setAdvice(aiAdvice);
+    setJobMatches(matches);
     setLoading(false);
   }, [category, bvnVerified, score]);
 
@@ -99,5 +133,5 @@ export function useInsights() {
     fetchInsights();
   }, [fetchInsights]);
 
-  return { pulse, advice, loading, refetch: fetchInsights };
+  return { pulse, advice, jobMatches, loading, refetch: fetchInsights };
 }

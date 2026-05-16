@@ -63,6 +63,12 @@ export const ENDPOINTS = {
     details:   (id: string) => `${API_ROOT}/opportunities/${id}`,
     recommend: `${API_ROOT}/opportunities/recommended`,
   },
+
+  // AI Consultant
+  ai: {
+    consultant: `${API_ROOT}/ai/consultant/matches`,
+    advice:     `${API_ROOT}/ai/consultant/advice`,
+  },
 } as const;
 
 // ─── Request timeouts ─────────────────────────────────────────────────────────

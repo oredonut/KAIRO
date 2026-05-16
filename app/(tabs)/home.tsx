@@ -54,7 +54,7 @@ export default function HomeScreen() {
   const { fullName, profileImage, bvnVerified } = useOnboardingStore();
   const { score, band } = useTrustScore();
   const { balance } = useWallet();
-  const { pulse, advice, loading: insightsLoading } = useInsights();
+  const { pulse, advice, jobMatches, loading: insightsLoading } = useInsights();
 
   const { t, language, toggleLanguage } = useTranslation();
   const { unreadCount } = useNotifications();
@@ -135,6 +135,32 @@ export default function HomeScreen() {
             You're in the top <Text style={{ fontWeight: 'bold', color: Palette.gold[500] }}>15%</Text> of informal earners in your area.
           </Text>
         </Pressable>
+
+        {/* AI Consultant Hero */}
+        <Animated.View 
+          entering={FadeInUp.delay(100)}
+          style={styles.consultantHero}
+        >
+          <View style={styles.consultantRow}>
+            <View style={styles.consultantTextCol}>
+              <View style={styles.aiBadgeSmall}>
+                <Text style={styles.aiBadgeTextSmall}>AI CONSULTANT</Text>
+              </View>
+              <Text style={styles.consultantTitle}>
+                I've found {jobMatches.length} jobs that fit your profile.
+              </Text>
+              <Pressable 
+                onPress={() => router.push('/consultant' as any)}
+                style={styles.consultantLink}
+              >
+                <Text style={styles.consultantLinkText}>VIEW SMART MATCHES →</Text>
+              </Pressable>
+            </View>
+            <View style={styles.consultantIconBox}>
+              <Text style={styles.consultantIcon}>🤖</Text>
+            </View>
+          </View>
+        </Animated.View>
 
         {/* Loan Offer Unlock (Demo Hero) */}
         {score >= 550 && (
@@ -564,6 +590,65 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
   promoIcon: { fontSize: 48, marginLeft: Spacing[4], opacity: 0.8 },
+  
+  // AI Consultant Hero
+  consultantHero: {
+    backgroundColor: Palette.white.pure,
+    marginHorizontal: Spacing[5],
+    marginTop: Spacing[4],
+    padding: Spacing[5],
+    borderRadius: Radius['2xl'],
+    borderWidth: 1,
+    borderColor: Palette.dark[100],
+    ...Shadows.sm,
+  },
+  consultantRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing[4],
+  },
+  consultantTextCol: { flex: 1 },
+  aiBadgeSmall: {
+    backgroundColor: Palette.gold[50],
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    alignSelf: 'flex-start',
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: Palette.gold[200],
+  },
+  aiBadgeTextSmall: {
+    color: Palette.gold[900],
+    fontSize: 8,
+    fontWeight: '900',
+  },
+  consultantTitle: {
+    fontSize: Typography.size.sm,
+    fontWeight: 'bold',
+    color: Palette.dark[900],
+    marginBottom: 10,
+    lineHeight: 18,
+  },
+  consultantLink: {
+    alignSelf: 'flex-start',
+  },
+  consultantLinkText: {
+    fontSize: 10,
+    fontWeight: '900',
+    color: Palette.gold[600],
+    letterSpacing: 0.5,
+  },
+  consultantIconBox: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: Palette.dark[900],
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  consultantIcon: { fontSize: 24 },
 
   // Loan Offer
   loanOfferCard: {
