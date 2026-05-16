@@ -119,3 +119,27 @@ async def squad_webhook(request: Request):
 
     # Must return 200 fast — Squad retries on any non-2xx or timeout
     return {"status": "ok"}
+
+
+@router.post("/vapi")
+async def vapi_webhook(request: Request):
+    """
+    Vapi fires this endpoint for real-time call events.
+    """
+    payload = await request.json()
+    message = payload.get("message", {})
+    message_type = message.get("type", "")
+
+    logger.info(f"Vapi webhook received: {message_type}")
+
+    if message_type == "status-update":
+        status = message.get("status")
+        logger.info(f"Call status updated: {status}")
+    
+    elif message_type == "transcript":
+        transcript = message.get("transcript")
+        role = message.get("role")
+        logger.info(f"[{role}]: {transcript}")
+
+    # Return 200 to acknowledge receipt
+    return {"status": "ok"}

@@ -259,3 +259,16 @@ class ChatResponse(BaseModel):
     suggestions: List[str] = []
     action: Optional[dict] = None
     session_id: str 
+
+
+# ── Identity / KYC ─────────────────────────────────────────────
+
+class BVNVerifyRequest(BaseModel):
+    bvn: str
+
+class BVNVerifyResponse(BaseModel):
+    verified: bool
+    full_name: Optional[str] = None
+    dob: Optional[str] = None
+    mobile: Optional[str] = None
+    message: Optional[str] = None

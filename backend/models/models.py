@@ -52,7 +52,7 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    firebase_uid = Column(String, unique=True, index=True, nullable=True)
+    supabase_uid = Column(UUID(as_uuid=True), unique=True, index=True, nullable=True)
     full_name = Column(String(120), nullable=False)
     phone = Column(String(20), unique=True, index=True, nullable=False)
     email = Column(String(160), unique=True, index=True, nullable=True)

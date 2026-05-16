@@ -250,3 +250,30 @@ def verify_squad_webhook(body: bytes, signature: str) -> bool:
         hashlib.sha512, 
     ).hexdigest()
     return hmac.compare_digest(expected, signature)
+
+
+# ── BVN Verification ───────────────────────────────────────────
+
+async def verify_bvn(bvn: str) -> dict:
+    """
+    Verify a BVN using Squad's lookup service.
+    Returns the user's basic info if successful.
+    """
+    async with httpx.AsyncClient(timeout=15) as c:
+        resp = await c.get(
+            f"{BASE}/payout/bvn/lookup?bvn={bvn}",
+            headers=HEADERS,
+        )
+    
+    if resp.status_code != 200:
+        logger.error(f"Squad BVN lookup error: {resp.text}")
+        raise ValueError("Identity service temporarily unavailable")
+
+    data = resp.json()
+    logger.info(f"Squad verify_bvn: {data}")
+    
+    if data.get("success"):
+        # Squad returns data.data with keys: first_name, last_name, dob, mobile
+        return data["data"]
+    
+    raise ValueError(data.get("message", "BVN verification failed"))

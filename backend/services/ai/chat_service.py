@@ -2,12 +2,10 @@ import uuid
 import json
 from typing import Optional
 from loguru import logger
-import anthropic 
+import httpx
 
 from app.core.config import settings
 from app.db.redis_client import cache_get, cache_set
-
-client = anthropic.Anthropic(api_key=settings.ANTHROPIC_API_KEY)
 
 
 # ── System prompt builder ──────────────────────────────────────
@@ -56,6 +54,20 @@ async def save_session_history(session_id: str, messages: list):
     await cache_set(f"chat_session:{session_id}", json.dumps(trimmed), ttl=1800)
 
 
+# ── Convert stored history to Gemini format ────────────────────
+
+def _to_gemini_history(history: list) -> list:
+    """
+    Stored history format: [{"role": "user"|"assistant", "content": "..."}]
+    Gemini format:         [{"role": "user"|"model",     "parts": ["..."]}]
+    """
+    gemini_history = []
+    for msg in history:
+        role = "model" if msg["role"] == "assistant" else "user"
+        gemini_history.append({"role": role, "parts": [msg["content"]]})
+    return gemini_history
+
+
 # ── Main chat function ─────────────────────────────────────────
 
 async def chat_with_advisor(
@@ -65,41 +77,74 @@ async def chat_with_advisor(
     language: str = "en",
 ) -> dict:
     """
-    Sends a message to Claude with full user economic context injected.
-    Maintains conversation history per session in Redis.
+    Sends a message to Vapi Chat API with full user economic context injected.
+    Maintains conversation history per session by tracking Vapi's chat ID in Redis.
     """
     if not session_id:
         session_id = str(uuid.uuid4())
 
-    # Load history
-    history = await get_session_history(session_id)
+    # Load history (specifically the Vapi previousChatId)
+    vapi_chat_id = None
+    cached = await cache_get(f"vapi_session:{session_id}")
+    if cached:
+        vapi_chat_id = cached.decode("utf-8") if isinstance(cached, bytes) else cached
 
-    # Add new user message
-    history.append({"role": "user", "content": user_message})
-
+    reply = "I'm having a connection issue right now. Please try again."
+    
     try:
-        response = client.messages.create(
-            model="claude-opus-4-5",
-            max_tokens=500,
-            system=build_system_prompt(user_context),
-            messages=history,
-        )
-        reply = response.content[0].text
+        # Prepare Vapi Chat API Payload
+        payload = {
+            "assistantId": settings.VAPI_ASSISTANT_ID,
+            "input": user_message,
+            "assistant": {
+                "model": {
+                    "messages": [
+                        {
+                            "role": "system",
+                            "content": build_system_prompt(user_context)
+                        }
+                    ]
+                }
+            }
+        }
+        
+        if vapi_chat_id:
+            payload["previousChatId"] = vapi_chat_id
+
+        headers = {
+            "Authorization": f"Bearer {settings.VAPI_PRIVATE_KEY}",
+            "Content-Type": "application/json"
+        }
+
+        async with httpx.AsyncClient() as client:
+            res = await client.post(
+                "https://api.vapi.ai/chat",
+                json=payload,
+                headers=headers,
+                timeout=30.0
+            )
+            res.raise_for_status()
+            chat_data = res.json()
+            
+            # Vapi returns the response in output[0].content
+            if "output" in chat_data and len(chat_data["output"]) > 0:
+                reply = chat_data["output"][0]["content"]
+            
+            # Save the new Vapi Chat ID to maintain session
+            new_chat_id = chat_data.get("id")
+            if new_chat_id:
+                await cache_set(f"vapi_session:{session_id}", new_chat_id, ttl=1800)
 
     except Exception as e:
-        logger.error(f"Claude API error: {e}")
+        logger.error(f"Vapi Chat API error: {e}")
         # Graceful fallback — still useful without API
-        trust  = user_context.get('trust_score', 0)
-        name   = user_context.get('full_name', 'there')
-        reply  = (
+        trust = user_context.get('trust_score', 0)
+        name  = user_context.get('full_name', 'there')
+        reply = (
             f"Hey {name.split()[0]}! I'm having a connection issue right now. "
             f"Your Trust Score is {trust}/100 and your wallet is active. "
             f"Head to the Opportunities tab to see your matched gigs."
         )
-
-    # Save updated history
-    history.append({"role": "assistant", "content": reply})
-    await save_session_history(session_id, history)
 
     # Generate context-aware follow-up suggestions
     suggestions = _generate_suggestions(user_message, reply, user_context)
@@ -131,7 +176,7 @@ def _generate_suggestions(user_msg: str, reply: str, ctx: dict) -> list:
 
 def _detect_action(reply: str) -> Optional[dict]:
     """
-    If Claude's reply suggests navigating somewhere in the app,
+    If Gemini's reply suggests navigating somewhere in the app,
     return an action object the frontend can handle.
     """
     reply_lower = reply.lower()
