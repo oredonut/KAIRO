@@ -1,5 +1,7 @@
 # KAIRO — The AI Economic Identity Network 🌍✨
 
+![Kairo App Hero](./kairo_hero_mockup.png)
+
 **Kairo** is an AI-powered economic identity platform designed to bring the informal economy into the formal financial system. Built for the **Squad Hackathon 3.0**, Kairo enables "hustlers"—artisans, traders, and gig workers—to build a verifiable financial reputation (Trust Score) and access professional banking services via the **Squad API**.
 
 ---
