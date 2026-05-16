@@ -152,12 +152,37 @@ function GoalCard({ goal }: { goal: SavingsGoal }) {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
+import { useOnboardingStore } from '@/store/onboarding-store';
+
 export default function SquadWallet() {
+  const { walletCreated, set: setOnboarding } = useOnboardingStore();
   // ── Live data from Squad-backed API (mock fallback when offline) ───────────
   const { balance, transactions, loading, txnLoading, isOffline, refetch } = useWallet();
 
   const [filter, setFilter]         = useState<FilterKey>('all');
   const [balanceVisible, setVisible] = useState(true);
+
+  if (!walletCreated) {
+    return (
+      <ScrollView style={styles.root} contentContainerStyle={[styles.content, { justifyContent: 'center', flex: 1, padding: Spacing[6] }]}>
+        <View style={styles.emptyWalletCard}>
+          <View style={styles.emptyIconBox}>
+            <Text style={{ fontSize: 48 }}>💳</Text>
+          </View>
+          <Text style={styles.emptyTitle}>Wallet Setup Required</Text>
+          <Text style={styles.emptyText}>
+            To receive payments, fund your account, or access micro-loans, you need to activate your Kairo Wallet.
+          </Text>
+          <Pressable 
+            onPress={() => setOnboarding({ walletCreated: true })}
+            style={({ pressed }) => [styles.createWalletBtn, pressed && { opacity: 0.8 }]}
+          >
+            <Text style={styles.createWalletBtnText}>CREATE WALLET NOW</Text>
+          </Pressable>
+        </View>
+      </ScrollView>
+    );
+  }
 
   // Derived values from live data
   const acctRaw   = balance?.account_number ?? '8021483560';
@@ -483,4 +508,51 @@ const styles = StyleSheet.create({
   txnAmount: { fontSize: Typography.size.sm, fontWeight: Typography.weight.bold },
   txnTime: { fontSize: Typography.size.xs, color: C.textMuted, marginTop: 2 },
   divider: { height: 1, backgroundColor: C.divider, marginLeft: Spacing[4] + 40 + Spacing[3] },
+  
+  // Empty Wallet State
+  emptyWalletCard: {
+    backgroundColor: Palette.white.pure,
+    borderRadius: Radius['2xl'],
+    padding: Spacing[6],
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Palette.dark[100],
+    ...Shadows.md,
+  },
+  emptyIconBox: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: Palette.gold[50],
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing[6],
+  },
+  emptyTitle: {
+    fontSize: Typography.size.lg,
+    fontWeight: 'bold',
+    color: Palette.dark[900],
+    marginBottom: Spacing[2],
+  },
+  emptyText: {
+    fontSize: Typography.size.sm,
+    color: Palette.dark[500],
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: Spacing[8],
+  },
+  createWalletBtn: {
+    backgroundColor: Palette.gold[500],
+    width: '100%',
+    paddingVertical: Spacing[4],
+    borderRadius: Radius.full,
+    alignItems: 'center',
+    ...Shadows.gold,
+  },
+  createWalletBtnText: {
+    color: Palette.dark[900],
+    fontSize: 14,
+    fontWeight: '900',
+    letterSpacing: 1,
+  },
 });

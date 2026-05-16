@@ -17,8 +17,36 @@ import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 
 const C = Colors.light;
 
+import * as Speech from 'expo-speech';
+
 export default function AIConsultantScreen() {
   const { jobMatches, loading } = useInsights();
+  const [isSpeaking, setIsSpeaking] = React.useState(false);
+
+  const speakIntro = () => {
+    const text = "Hello! I've analyzed your skills and Trust Score. Based on current market demand in Lagos, here are the top opportunities tailored specifically for your profile.";
+    Speech.speak(text, {
+      onStart: () => setIsSpeaking(true),
+      onDone: () => setIsSpeaking(false),
+      onError: () => setIsSpeaking(false),
+    });
+  };
+
+  const speakMatch = (match: any) => {
+    const text = `Found a match for ${match.role} at ${match.company}. My reasoning: ${match.reason}. The salary is ${match.salary}.`;
+    Speech.speak(text);
+  };
+
+  React.useEffect(() => {
+    // Auto-speak on load (optional, but good for demo)
+    const timer = setTimeout(() => {
+      speakIntro();
+    }, 1000);
+    return () => {
+      Speech.stop();
+      clearTimeout(timer);
+    };
+  }, []);
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -43,6 +71,12 @@ export default function AIConsultantScreen() {
             <Text style={styles.personaName}>Kairo AI Advisor</Text>
             <Text style={styles.personaSub}>Powered by Economic Identity Data</Text>
           </View>
+          <Pressable 
+            onPress={speakIntro}
+            style={[styles.voiceBtn, isSpeaking && { backgroundColor: Palette.gold[100] }]}
+          >
+            <Text style={styles.voiceIcon}>{isSpeaking ? '🔊' : '🔈'}</Text>
+          </Pressable>
         </View>
 
         <Animated.View entering={FadeInDown.delay(200)} style={styles.introBox}>
@@ -65,6 +99,9 @@ export default function AIConsultantScreen() {
                 <Text style={styles.matchRole}>{match.role}</Text>
                 <Text style={styles.matchCompany}>{match.company}</Text>
               </View>
+              <Pressable onPress={() => speakMatch(match)} style={styles.matchSpeakBtn}>
+                <Text style={{ fontSize: 16 }}>🗣️</Text>
+              </Pressable>
               <View style={styles.scoreBadge}>
                 <Text style={styles.scoreLabel}>FIT SCORE</Text>
                 <Text style={styles.scoreValue}>{match.fitScore}%</Text>
@@ -88,7 +125,10 @@ export default function AIConsultantScreen() {
             </View>
 
             <Pressable 
-              onPress={() => alert('Opening Employer Connection...')}
+              onPress={() => router.push({
+                pathname: '/consultant/connect',
+                params: { role: match.role, company: match.company }
+              } as any)}
               style={({ pressed }) => [styles.connectBtn, pressed && { opacity: 0.8 }]}
             >
               <Text style={styles.connectBtnText}>CONNECT WITH EMPLOYER</Text>
@@ -102,6 +142,15 @@ export default function AIConsultantScreen() {
             Increasing your Trust Score to 900+ will unlock "Elite" status, granting you priority placement for high-budget infrastructure projects.
           </Text>
         </View>
+
+        <Animated.View entering={FadeInDown.delay(800)}>
+          <Pressable 
+            onPress={() => router.replace('/(tabs)/home' as any)}
+            style={({ pressed }) => [styles.proceedBtn, pressed && { opacity: 0.8 }]}
+          >
+            <Text style={styles.proceedBtnText}>PROCEED TO DASHBOARD</Text>
+          </Pressable>
+        </Animated.View>
 
         <View style={{ height: 40 }} />
       </ScrollView>
@@ -159,6 +208,15 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: Palette.dark[400],
   },
+  voiceBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: Palette.white.mist,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  voiceIcon: { fontSize: 20 },
 
   introBox: {
     backgroundColor: Palette.dark[900],
@@ -204,6 +262,11 @@ const styles = StyleSheet.create({
     fontSize: Typography.size.xs,
     color: Palette.dark[400],
     marginTop: 2,
+  },
+  matchSpeakBtn: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: Palette.white.mist,
   },
   scoreBadge: {
     alignItems: 'center',
@@ -291,5 +354,19 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#B45309',
     lineHeight: 18,
+  },
+  proceedBtn: {
+    backgroundColor: Palette.gold[500],
+    marginTop: Spacing[8],
+    paddingVertical: Spacing[4],
+    borderRadius: Radius.full,
+    alignItems: 'center',
+    ...Shadows.md,
+  },
+  proceedBtnText: {
+    color: Palette.dark[900],
+    fontSize: 14,
+    fontWeight: '900',
+    letterSpacing: 1,
   },
 });

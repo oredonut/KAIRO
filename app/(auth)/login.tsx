@@ -63,7 +63,7 @@ export default function Login() {
                         onPress={() => {
                             if (!isComplete) return;
                             // In a real app, call login API
-                            router.replace("/(tabs)/home" as any);
+                            router.replace("/consultant" as any);
                         }}
                         style={({ pressed }) => ({
                             backgroundColor: isComplete ? Palette.gold[500] : Palette.dark[700],

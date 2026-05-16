@@ -44,12 +44,10 @@ export default function Wallet() {
                 </Animated.View>
             </View>
 
-            <Animated.View entering={FadeInDown.delay(600).duration(600)} style={{ paddingBottom: Spacing[8] }}>
+            <Animated.View entering={FadeInDown.delay(600).duration(600)} style={{ paddingBottom: Spacing[8], gap: Spacing[3] }}>
                 <Pressable
                     onPress={() => {
-                        set({ walletCreated: true });
-                        update("wallet");
-                        router.push("/onboarding/complete" as any);
+                        router.push("/wallet/create" as any);
                     }}
                     style={({ pressed }) => ({
                         backgroundColor: Palette.gold[500],
@@ -66,6 +64,18 @@ export default function Wallet() {
                         letterSpacing: 1 
                     }}>
                         CREATE MY WALLET
+                    </Text>
+                </Pressable>
+
+                <Pressable
+                    onPress={() => {
+                        set({ walletCreated: false });
+                        router.replace("/consultant" as any);
+                    }}
+                    style={{ paddingVertical: Spacing[2] }}
+                >
+                    <Text style={{ color: Palette.dark[400], textAlign: 'center', fontSize: Typography.size.sm, fontWeight: 'bold' }}>
+                        I'LL DO THIS LATER
                     </Text>
                 </Pressable>
             </Animated.View>

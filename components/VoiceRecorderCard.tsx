@@ -263,21 +263,31 @@ export default function VoiceRecorderCard({
 
       if (uri) {
         setRecordingUri(uri);
-        // Load the sound to get duration
-        const { sound, status } = await Audio.Sound.createAsync({ uri });
-        soundRef.current = sound;
-        if (status.isLoaded) setTotalDuration(status.durationMillis ?? 0);
-        sound.setOnPlaybackStatusUpdate((s) => {
-          if (s.isLoaded) {
-            const dur = s.durationMillis ?? 1;
-            setPlaybackPos((s.positionMillis ?? 0) / dur);
-            setIsPlaying(s.isPlaying);
-            if (s.didJustFinish) {
-              setIsPlaying(false);
-              setPlaybackPos(0);
+        
+        // Unload any existing sound first
+        if (soundRef.current) {
+          await soundRef.current.unloadAsync().catch(() => {});
+        }
+
+        // Load the new sound
+        const { sound, status } = await Audio.Sound.createAsync(
+          { uri },
+          { shouldPlay: false, volume: 1.0 },
+          (s) => {
+            if (s.isLoaded) {
+              const dur = s.durationMillis ?? 1;
+              setPlaybackPos((s.positionMillis ?? 0) / dur);
+              setIsPlaying(s.isPlaying);
+              if (s.didJustFinish) {
+                setIsPlaying(false);
+                setPlaybackPos(0);
+              }
             }
           }
-        });
+        );
+
+        soundRef.current = sound;
+        if (status.isLoaded) setTotalDuration(status.durationMillis ?? 0);
         setRecorderState('reviewing');
       }
     } catch (e) {
@@ -343,10 +353,10 @@ export default function VoiceRecorderCard({
   // ── Derived labels ───────────────────────────────────────────────────────────
 
   const stateLabel = {
-    idle: 'Tap to record your introduction',
+    idle: 'Tap to record your story',
     recording: `Recording — ${formatTime(remaining)} left`,
-    reviewing: isPlaying ? 'Playing…' : `${formatTime(Math.round((totalDuration / 1000)))} recorded`,
-    saved: 'Voice introduction saved',
+    reviewing: isPlaying ? 'Listening to your story…' : 'Review your story before sending',
+    saved: 'Your story has been saved!',
   }[recorderState];
 
   const micButtonLabel = {
@@ -447,9 +457,9 @@ export default function VoiceRecorderCard({
             <Pressable
               onPress={handleSave}
               style={({ pressed }) => [styles.saveBtn, pressed && { opacity: 0.85 }]}
-              accessibilityLabel="Save voice introduction"
+              accessibilityLabel="Save and send your story"
             >
-              <Text style={styles.saveBtnText}>Save intro</Text>
+              <Text style={styles.saveBtnText}>Save & Send</Text>
             </Pressable>
           </View>
         )}

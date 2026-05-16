@@ -73,7 +73,7 @@ export default function Register() {
                             onPress={() => {
                                 if (!isComplete) return;
                                 // In a real app, you'd call the register API here
-                                router.replace("/(tabs)/home" as any);
+                                router.replace("/onboarding/wallet" as any);
                             }}
                             style={({ pressed }) => ({
                                 backgroundColor: isComplete ? Palette.gold[500] : Palette.dark[700],
