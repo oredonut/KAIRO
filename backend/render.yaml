@@ -3,6 +3,7 @@ services:
   - type: web
     name: kairo-api
     env: python
+    rootDirectory: backend
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
@@ -37,7 +38,7 @@ databases:
     plan: free
 
 # ── Redis ──
-redis:
+redisInstances:
   - name: kairo-redis
     plan: free
     ipAllowList: [] # Only allow internal connections
