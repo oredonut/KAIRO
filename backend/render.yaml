@@ -12,11 +12,6 @@ services:
         fromDatabase:
           name: kairo-db
           property: connectionString
-      - key: REDIS_URL
-        fromService:
-          type: redis
-          name: kairo-redis
-          property: connectionString
       - key: APP_ENV
         value: production
       - key: SQUAD_SECRET_KEY
@@ -31,12 +26,6 @@ services:
         sync: false
       - key: GEMINI_API_KEY
         sync: false
-
-  # ── Redis Service ──
-  - type: redis
-    name: kairo-redis
-    plan: free
-    ipAllowList: [] # Only allow internal connections
 
 # ── Database ──
 databases:
