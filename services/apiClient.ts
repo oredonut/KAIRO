@@ -26,8 +26,8 @@ export class ApiError extends Error {
 }
 
 export class NetworkError extends Error {
-  constructor(message = 'No internet connection') {
-    super(message);
+  constructor(message = 'No internet connection', public readonly url?: string) {
+    super(`${message} (${url || 'unknown URL'})`);
     this.name = 'NetworkError';
   }
 }
@@ -83,8 +83,8 @@ export async function apiRequest<T>(
         signal: controller.signal,
       });
     } catch (err: any) {
-      if (err?.name === 'AbortError') throw new NetworkError('Request timed out');
-      throw new NetworkError();
+      if (err?.name === 'AbortError') throw new NetworkError('Request timed out', url);
+      throw new NetworkError('No internet connection', url);
     } finally {
       clearTimeout(timer);
     }

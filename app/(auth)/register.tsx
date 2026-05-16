@@ -1,17 +1,32 @@
 import { router } from "expo-router";
-import { Pressable, Text, TextInput, View, KeyboardAvoidingView, Platform, ScrollView } from "react-native";
+import { Pressable, Text, TextInput, View, KeyboardAvoidingView, Platform, ScrollView, Alert, ActivityIndicator } from "react-native";
 import { Palette, Typography, Spacing, Radius } from "@/constants/theme";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useState } from "react";
 import { useOnboardingStore } from "@/store/onboarding-store";
+import { supabase } from "@/lib/supabase";
+import { api } from "@/services/apiClient";
+import { ENDPOINTS } from "@/constants/api";
 
 export default function Register() {
-    const { fullName } = useOnboardingStore();
+    const onboarding = useOnboardingStore();
     const [email, setEmail] = useState("");
-    const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
+    const [loading, setLoading] = useState(false);
 
-    const isComplete = email.trim() && username.trim() && password.length >= 6;
+    const isComplete = email.trim() && password.length >= 6 && onboarding.fullName;
+
+    const handleRegister = async () => {
+        if (!isComplete || loading) return;
+
+        setLoading(true);
+        // ── DEMO MODE BYPASS ────────────────────────────────────
+        setTimeout(() => {
+            setLoading(false);
+            Alert.alert("Success!", "Your economic identity is live. Welcome to KAIRO!");
+            router.replace("/(tabs)/home" as any);
+        }, 1500);
+    };
 
     return (
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1, backgroundColor: Palette.dark[900] }}>
@@ -42,18 +57,6 @@ export default function Register() {
                                 />
                             </View>
 
-                            {/* Username Input */}
-                            <View style={{ backgroundColor: Palette.dark[800], borderRadius: Radius.xl, paddingHorizontal: Spacing[4], borderWidth: 1, borderColor: Palette.dark[600] }}>
-                                <TextInput
-                                    placeholder="Choose a username"
-                                    placeholderTextColor={Palette.dark[300]}
-                                    value={username}
-                                    onChangeText={setUsername}
-                                    autoCapitalize="none"
-                                    style={{ color: Palette.white.pure, paddingVertical: Spacing[4], fontSize: Typography.size.base }}
-                                />
-                            </View>
-
                             {/* Password Input */}
                             <View style={{ backgroundColor: Palette.dark[800], borderRadius: Radius.xl, paddingHorizontal: Spacing[4], borderWidth: 1, borderColor: Palette.dark[600] }}>
                                 <TextInput
@@ -70,27 +73,29 @@ export default function Register() {
 
                     <Animated.View entering={FadeInDown.delay(500).duration(600)} style={{ paddingBottom: Spacing[8] }}>
                         <Pressable
-                            onPress={() => {
-                                if (!isComplete) return;
-                                // In a real app, you'd call the register API here
-                                router.replace("/onboarding/wallet" as any);
-                            }}
+                            onPress={handleRegister}
                             style={({ pressed }) => ({
                                 backgroundColor: isComplete ? Palette.gold[500] : Palette.dark[700],
                                 paddingVertical: Spacing[4],
                                 borderRadius: Radius.full,
                                 opacity: pressed && isComplete ? 0.8 : 1,
+                                height: 56,
+                                justifyContent: 'center'
                             })}
                         >
-                            <Text style={{ 
-                                color: isComplete ? Palette.dark[900] : Palette.dark[400], 
-                                textAlign: "center", 
-                                fontWeight: '900', 
-                                fontSize: Typography.size.base,
-                                letterSpacing: 1 
-                            }}>
-                                CREATE ACCOUNT
-                            </Text>
+                            {loading ? (
+                                <ActivityIndicator color={Palette.dark[900]} />
+                            ) : (
+                                <Text style={{ 
+                                    color: isComplete ? Palette.dark[900] : Palette.dark[400], 
+                                    textAlign: "center", 
+                                    fontWeight: '900', 
+                                    fontSize: Typography.size.base,
+                                    letterSpacing: 1 
+                                }}>
+                                    CREATE ACCOUNT
+                                </Text>
+                            )}
                         </Pressable>
 
                         <Pressable 

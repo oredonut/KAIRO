@@ -30,8 +30,9 @@ export const API_ROOT      = `${API_BASE_URL}/api/${API_VERSION}`;
 export const ENDPOINTS = {
   // Auth
   auth: {
-    refresh:  `${API_ROOT}/auth/refresh`,
-    logout:   `${API_ROOT}/auth/logout`,
+    refresh:    `${API_ROOT}/auth/refresh`,
+    logout:     `${API_ROOT}/auth/logout`,
+    verifyBvn:  `${API_ROOT}/auth/verify-bvn`,
   },
 
   // Wallet (Squad-backed)

@@ -30,6 +30,9 @@ import { router } from 'expo-router';
 import { Palette, Colors, Typography, Spacing, Radius, Shadows } from '@/constants/theme';
 import { useWallet } from '@/hooks/use-wallet';
 import type { WalletTransaction } from '@/hooks/use-wallet';
+import { api } from '@/services/apiClient';
+import { ENDPOINTS } from '@/constants/api';
+import { Modal, TextInput, ActivityIndicator } from 'react-native';
 
 const C = Colors.light;
 
@@ -204,8 +207,60 @@ export default function SquadWallet() {
   const saved    = transactions.filter((t) => t.type === 'savings').reduce((s, t) => s + t.amount, 0);
 
   const copyAccount = useCallback(() => {
-    Alert.alert('Copied', `Account number ${acctFmt} copied to clipboard.`);
-  }, [acctFmt]);
+    Alert.alert('Copied', `Account number ${acctRaw} copied to clipboard.`);
+  }, [acctRaw]);
+
+  // ── Real Send Money Flow ──
+  const [showSendModal, setShowSendModal] = useState(false);
+  const [banks, setBanks] = useState<any[]>([]);
+  const [selectedBank, setSelectedBank] = useState("");
+  const [destAccount, setDestAccount] = useState("");
+  const [destName, setDestName] = useState("");
+  const [amount, setAmount] = useState("");
+  const [transferLoading, setTransferLoading] = useState(false);
+
+  const fetchBanks = async () => {
+    try {
+      const data = await api.get<any[]>(ENDPOINTS.wallet.banks);
+      setBanks(data);
+    } catch (err) {
+      console.error("Failed to fetch banks", err);
+    }
+  };
+
+  const handleVerify = async () => {
+    if (destAccount.length !== 10 || !selectedBank) return;
+    try {
+      const data = await api.post<any>(ENDPOINTS.wallet.verify_receiver, {
+        account_number: destAccount,
+        bank_code: selectedBank
+      });
+      setDestName(data.account_name);
+    } catch (err: any) {
+      setDestName("Invalid account or bank");
+    }
+  };
+
+  const handleSend = async () => {
+    if (!destName || !amount) return;
+    setTransferLoading(true);
+    try {
+      await api.post(ENDPOINTS.wallet.send, {
+        amount: parseFloat(amount),
+        account_number: destAccount,
+        bank_code: selectedBank,
+        account_name: destName,
+        narration: "KAIRO Transfer"
+      });
+      Alert.alert("Success", "Transfer initiated successfully!");
+      setShowSendModal(false);
+      refetch();
+    } catch (err: any) {
+      Alert.alert("Transfer Failed", err.message || "Please check your balance");
+    } finally {
+      setTransferLoading(false);
+    }
+  };
 
   return (
     <ScrollView style={styles.root} showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
@@ -242,11 +297,51 @@ export default function SquadWallet() {
 
       {/* ── Quick actions ── */}
       <View style={styles.actionsCard}>
-        <ActionBtn icon="⬇️"  label="Add Money" onPress={() => Alert.alert('Add Money', 'Fund via bank transfer or USSD.')} />
-        <ActionBtn icon="➡️"  label="Send"       onPress={() => Alert.alert('Send',      'Enter recipient details.')} />
+        <ActionBtn icon="⬇️"  label="Add Money" onPress={() => Alert.alert('Add Money', `Transfer to your KAIRO Virtual Account:\n\n${bankName}\n${acctRaw}`)} />
+        <ActionBtn icon="➡️"  label="Send"       onPress={() => { fetchBanks(); setShowSendModal(true); }} />
         <ActionBtn icon="📲"  label="Receive"    onPress={() => Alert.alert('Receive',   'Share your payment link.')} />
-        <ActionBtn icon="🏧"  label="Withdraw"   onPress={() => Alert.alert('Withdraw',  'Transfer to your bank account.')} />
+        <ActionBtn icon="🏧"  label="Withdraw"   onPress={() => { fetchBanks(); setShowSendModal(true); }} />
       </View>
+
+      {/* ── Send Money Modal ── */}
+      <Modal visible={showSendModal} animationType="slide" transparent>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
+          <View style={{ backgroundColor: Palette.white.pure, borderTopLeftRadius: Radius.xl, borderTopRightRadius: Radius.xl, padding: Spacing[6], minHeight: 400 }}>
+            <Text style={{ fontSize: Typography.size.lg, fontWeight: 'bold', marginBottom: Spacing[4] }}>Send Money</Text>
+            
+            <TextInput 
+              placeholder="Account Number" 
+              value={destAccount}
+              onChangeText={(t) => { setDestAccount(t); if(t.length === 10) handleVerify(); }}
+              keyboardType="number-pad"
+              maxLength={10}
+              style={{ backgroundColor: Palette.dark[50], padding: Spacing[4], borderRadius: Radius.lg, marginBottom: Spacing[3] }}
+            />
+
+            {destName ? <Text style={{ color: C.success, marginBottom: Spacing[3], fontSize: 12 }}>{destName}</Text> : null}
+
+            <TextInput 
+              placeholder="Amount (₦)" 
+              value={amount}
+              onChangeText={setAmount}
+              keyboardType="number-pad"
+              style={{ backgroundColor: Palette.dark[50], padding: Spacing[4], borderRadius: Radius.lg, marginBottom: Spacing[6] }}
+            />
+
+            <Pressable 
+              onPress={handleSend}
+              disabled={transferLoading}
+              style={{ backgroundColor: Palette.dark[900], padding: Spacing[4], borderRadius: Radius.full, alignItems: 'center' }}
+            >
+              {transferLoading ? <ActivityIndicator color={Palette.gold[500]} /> : <Text style={{ color: Palette.gold[500], fontWeight: 'bold' }}>CONFIRM TRANSFER</Text>}
+            </Pressable>
+
+            <Pressable onPress={() => setShowSendModal(false)} style={{ marginTop: Spacing[4], alignItems: 'center' }}>
+              <Text style={{ color: C.textMuted }}>Cancel</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
 
       {/* ── Savings goals ── */}
       <View style={styles.section}>

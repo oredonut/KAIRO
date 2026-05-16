@@ -1,0 +1,92 @@
+version: "3.9"
+
+services:
+
+  # ── PostgreSQL ─────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: kairo_db
+      POSTGRES_USER: kairo
+      POSTGRES_PASSWORD: kairo123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kairo"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis ──────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── ChromaDB ───────────────────────────────────────────────
+  chromadb:
+    image: chromadb/chroma:latest
+    restart: unless-stopped
+    ports:
+      - "8001:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+
+  # ── FastAPI backend ────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://kairo:kairo123@postgres:5432/kairo_db
+      REDIS_URL: redis://redis:6379/0
+      CHROMA_HOST: chromadb
+      CHROMA_PORT: 8000
+      N8N_BASE_URL: http://n8n:5678
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./app:/app/app   # hot reload in dev
+
+  # ── n8n automation ─────────────────────────────────────────
+  n8n:
+    image: n8nio/n8n:latest
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      N8N_BASIC_AUTH_ACTIVE: "true"
+      N8N_BASIC_AUTH_USER: admin
+      N8N_BASIC_AUTH_PASSWORD: kairo_n8n_pass
+      WEBHOOK_URL: http://n8n:5678
+      N8N_HOST: 0.0.0.0
+      N8N_PORT: 5678
+      # Give n8n access to the FastAPI internal endpoints
+      KAIRO_API_URL: http://api:8000
+      KAIRO_API_TOKEN: ${N8N_WEBHOOK_TOKEN}
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./n8n/workflows:/home/node/.n8n/workflows  # pre-load workflows
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:
+  chroma_data:
+  n8n_data: 

@@ -1,14 +1,31 @@
 import { router } from "expo-router";
-import { Pressable, Text, TextInput, View, KeyboardAvoidingView, Platform } from "react-native";
+import { Pressable, Text, TextInput, View, KeyboardAvoidingView, Platform, Alert, ActivityIndicator } from "react-native";
 import { Palette, Typography, Spacing, Radius } from "@/constants/theme";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useState } from "react";
+import { supabase } from "@/lib/supabase";
+import { useOnboardingStore } from "@/store/onboarding-store";
+import { api } from "@/services/apiClient";
+import { ENDPOINTS } from "@/constants/api";
 
 export default function Login() {
+    const onboarding = useOnboardingStore();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [loading, setLoading] = useState(false);
 
     const isComplete = email.trim() && password.length >= 6;
+
+    const handleLogin = async () => {
+        if (!isComplete || loading) return;
+
+        setLoading(true);
+        // ── DEMO MODE BYPASS ────────────────────────────────────
+        setTimeout(() => {
+            setLoading(false);
+            router.replace("/(tabs)/home" as any);
+        }, 1200);
+    };
 
     return (
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1, backgroundColor: Palette.dark[900] }}>
@@ -60,27 +77,29 @@ export default function Login() {
 
                 <Animated.View entering={FadeInDown.delay(500).duration(600)} style={{ paddingBottom: Spacing[8] }}>
                     <Pressable
-                        onPress={() => {
-                            if (!isComplete) return;
-                            // In a real app, call login API
-                            router.replace("/consultant" as any);
-                        }}
+                        onPress={handleLogin}
                         style={({ pressed }) => ({
                             backgroundColor: isComplete ? Palette.gold[500] : Palette.dark[700],
                             paddingVertical: Spacing[4],
                             borderRadius: Radius.full,
                             opacity: pressed && isComplete ? 0.8 : 1,
+                            height: 56,
+                            justifyContent: 'center'
                         })}
                     >
-                        <Text style={{ 
-                            color: isComplete ? Palette.dark[900] : Palette.dark[400], 
-                            textAlign: "center", 
-                            fontWeight: '900', 
-                            fontSize: Typography.size.base,
-                            letterSpacing: 1 
-                        }}>
-                            LOGIN
-                        </Text>
+                        {loading ? (
+                            <ActivityIndicator color={Palette.dark[900]} />
+                        ) : (
+                            <Text style={{ 
+                                color: isComplete ? Palette.dark[900] : Palette.dark[400], 
+                                textAlign: "center", 
+                                fontWeight: '900', 
+                                fontSize: Typography.size.base,
+                                letterSpacing: 1 
+                            }}>
+                                LOGIN
+                            </Text>
+                        )}
                     </Pressable>
 
                     <Pressable 
