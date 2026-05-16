@@ -32,13 +32,13 @@ services:
       - key: GEMINI_API_KEY
         sync: false
 
+  # ── Redis Service ──
+  - type: redis
+    name: kairo-redis
+    plan: free
+    ipAllowList: [] # Only allow internal connections
+
 # ── Database ──
 databases:
   - name: kairo-db
     plan: free
-
-# ── Redis ──
-redisInstances:
-  - name: kairo-redis
-    plan: free
-    ipAllowList: [] # Only allow internal connections
