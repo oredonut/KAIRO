@@ -5,10 +5,9 @@ from sqlalchemy import select
 from app.db.database import get_db
 from app.core.security import get_current_user_id
 from app.models.models import User, EconomicIdentity, Wallet, UserSkill
-    UserProfileResponse, ChatRequest, ChatResponse, EconomicIdentityResponse,
-    BVNVerifyRequest, BVNVerifyResponse
+from app.schemas.schemas import (
+    UserProfileResponse, ChatRequest, ChatResponse, EconomicIdentityResponse
 )
-from app.services.squad.squad_service import verify_bvn as squad_verify_bvn
 from app.services.ai.chat_service import chat_with_advisor
 
 # ── Profile router ─────────────────────────────────────────────
@@ -171,44 +170,6 @@ async def submit_kyc(
     ))
 
     return {"status": "processing", "message": "KYC submitted. Verification in progress."}
-
-
-@profile_router.post("/me/verify-bvn", response_model=BVNVerifyResponse)
-async def verify_bvn(
-    body: BVNVerifyRequest,
-    user_id: str = Depends(get_current_user_id),
-    db: AsyncSession = Depends(get_db),
-):
-    """
-    Verify BVN via Squad and update user record.
-    """
-    try:
-        data = await squad_verify_bvn(body.bvn)
-        
-        # Update user in DB
-        result = await db.execute(select(User).where(User.id == user_id))
-        user = result.scalar_one_or_none()
-        
-        if user:
-            user.bvn = body.bvn
-            # Optionally compare names if provided
-            user.is_verified = True
-            await db.commit()
-            
-        return BVNVerifyResponse(
-            verified=True,
-            full_name=f"{data.get('first_name', '')} {data.get('last_name', '')}",
-            dob=data.get("dob"),
-            mobile=data.get("mobile"),
-            message="BVN successfully verified"
-        )
-    except ValueError as e:
-        return BVNVerifyResponse(
-            verified=False,
-            message=str(e)
-        )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Internal verification error: {str(e)}")
 
 
 # ── Chat router ────────────────────────────────────────────────
