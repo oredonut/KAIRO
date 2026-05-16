@@ -1,50 +1,91 @@
-# Welcome to your Expo app 👋
+# KAIRO — The AI Economic Identity Network 🌍✨
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+**Kairo** is an AI-powered economic identity platform designed to bring the informal economy into the formal financial system. Built for the **Squad Hackathon 3.0**, Kairo enables "hustlers"—artisans, traders, and gig workers—to build a verifiable financial reputation (Trust Score) and access professional banking services via the **Squad API**.
 
-## Get started
+---
 
-1. Install dependencies
+## 🚀 The Problem & Solution
 
-   ```bash
-   npm install
-   ```
+In emerging markets like Nigeria, millions of workers have high skills but no formal "Economic Identity." Without a credit history or verifiable income, they are locked out of loans and global opportunities.
 
-2. Start the app
+**Kairo solves this by:**
+1.  **Verifying the "Hustle"**: Using AI to analyze work samples, voice stories, and transaction data.
+2.  **Building Trust**: A dynamic **Trust Score** that grows as you transact and verify your skills.
+3.  **Financial Inclusion**: A full **Squad-backed wallet** for payments, savings, and micro-loans.
 
-   ```bash
-   npx expo start
-   ```
+---
 
-In the output, you'll find options to open the app in a
+## 🛠 Core Features
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+### 🤖 AI Hustle Consultant
+- **Voice Briefing**: The AI greets you upon login with a verbal summary of the market.
+- **Smart Matching**: AI analyzes your skills and Trust Score to find top-tier job matches.
+- **Direct Pitch**: Connect directly with verified employers and attach your Kairo credentials.
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+### 🛡 Trust Score (The Kairo ID)
+- A proprietary scoring algorithm that looks at BVN verification, transaction history, and "Proof of Work" (photos/voice stories).
+- Unlocks higher loan limits and "Elite" employer connections.
 
-## Get a fresh project
+### 💳 Squad-Integrated Wallet
+- **Virtual Accounts**: Instant account generation for receiving payments.
+- **Micro-Loans**: Access credit based on your Trust Score.
+- **Savings Goals**: Plan for your next equipment purchase or workshop.
 
-When you're ready, run:
+### 🗺 Economic Heatmap
+- Visualizes market demand across Lagos and beyond.
+- Helps workers move to high-demand areas to maximize daily earnings.
 
-```bash
-npm run reset-project
-```
+---
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## 🧰 Tech Stack
 
-## Learn more
+- **Framework**: Expo / React Native (Universal App)
+- **Styling**: Premium Obsidian & Metallic Gold Design System
+- **Animations**: React Native Reanimated (High-Fidelity Transitions)
+- **Payments**: Squad API (Virtual Accounts, Transfers)
+- **AI/Voice**: Expo Speech (TTS) & Custom Logic Hooks
+- **Media**: Expo Image Picker (Proof of Work verification)
 
-To learn more about developing your project with Expo, look at the following resources:
+---
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## 🏃‍♂️ Getting Started
 
-## Join the community
+### Prerequisites
+- Node.js (v18+)
+- Expo Go app on your Android/iOS device
 
-Join our community of developers creating universal apps.
+### Installation
+1.  Clone the repository:
+    ```bash
+    git clone https://github.com/oredonut/kairo.git
+    cd kairo
+    ```
+2.  Install dependencies:
+    ```bash
+    npm install
+    ```
+3.  Start the development server:
+    ```bash
+    npx expo start
+    ```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+---
+
+## 📦 Deployment
+
+Kairo is optimized for **EAS (Expo Application Services)**.
+
+- **Android Preview**: [Download the latest APK/AAB](https://expo.dev/accounts/odebs/projects/kairo/builds/febdfe7d-1cd2-4739-a3a1-140ee2f79af7)
+- **Update Channel**: `preview`
+
+---
+
+## 🤝 The Team
+
+Developed with ❤️ for the **Squad Hackathon 3.0**.
+
+**Vision**: To empower the next billion workers with a digital economic identity that the world can trust.
+
+---
+
+*© 2026 Kairo Network. All Rights Reserved.*
